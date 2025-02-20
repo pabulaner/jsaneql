@@ -80,7 +80,6 @@ public class Parser {
                 if (peekIf(Token.Kind.LPAREN)) {
                     return parseFuncCallNode(new TokenNode(token));
                 }
-                System.out.println("IDENT" + token.getValue());
             case INTEGER:
             case FLOAT:
             case FALSE:
@@ -134,7 +133,6 @@ public class Parser {
                 if (peekIf(Token.Kind.IDENT, Token.Kind.ASSIGN)) {
                     subName = next();
                     next();
-                    System.out.println("assign");
                 }
 
                 values.add(new FuncArgNode(null, FuncArgNode.SubType.FLAT, subName, parseExpression()));
