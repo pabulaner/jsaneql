@@ -1,18 +1,20 @@
 package de.pabulaner.jsaneql.parser;
 
+import de.pabulaner.jsaneql.algebra.expression.BinaryExpression;
+import de.pabulaner.jsaneql.algebra.expression.UnaryExpression;
 import de.pabulaner.jsaneql.parser.ast.AccessNode;
-import de.pabulaner.jsaneql.parser.ast.BinaryExpressionNode;
+import de.pabulaner.jsaneql.parser.ast.BinaryNode;
 import de.pabulaner.jsaneql.parser.ast.CastNode;
-import de.pabulaner.jsaneql.parser.ast.FuncArgNode;
-import de.pabulaner.jsaneql.parser.ast.FuncCallNode;
+import de.pabulaner.jsaneql.parser.ast.ArgNode;
+import de.pabulaner.jsaneql.parser.ast.CallNode;
 import de.pabulaner.jsaneql.parser.ast.ListNode;
 import de.pabulaner.jsaneql.parser.ast.Node;
-import de.pabulaner.jsaneql.parser.ast.QueryBodyNode;
+import de.pabulaner.jsaneql.parser.ast.QueryNode;
 import de.pabulaner.jsaneql.parser.ast.TokenNode;
-import de.pabulaner.jsaneql.parser.ast.UnaryExpression;
+import de.pabulaner.jsaneql.parser.ast.UnaryNode;
 import de.pabulaner.jsaneql.tokenizer.Token;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Parser {
@@ -29,21 +31,21 @@ public class Parser {
         this.errors = null;
     }
 
-    public Node parse(List<Token> source) {
+    public QueryNode parse(List<Token> source) {
         this.index = 0;
         this.source = source;
-        this.errors = new LinkedList<>();
+        this.errors = new ArrayList<>();
 
         if (peek() != Token.END) {
             return parseQueryBody();
         } else {
-            errors.add(new ParserError(peek(), "No query found"));
+            reportError(peek());
             return null;
         }
     }
 
-    private QueryBodyNode parseQueryBody() {
-        return new QueryBodyNode(parseExpression());
+    private QueryNode parseQueryBody() {
+        return new QueryNode(parseExpression());
     }
 
     private Node parseExpression() {
@@ -62,11 +64,33 @@ public class Parser {
             }
 
             next();
+            prec += 1;
+
+            BinaryExpression.Operation operation = null;
 
             switch (token.getKind()) {
-                case DOT: lhs = new AccessNode(lhs, parseExpression()); break;
-                case CAST: lhs = new CastNode(lhs, parseExpression()); break;
-                default: lhs = new BinaryExpressionNode(token, lhs, parseExpression(prec + 1)); break;
+                case LPAREN: lhs = new CallNode(lhs, parseArgs()); expectNext(Token.Kind.RPAREN); break;
+                case DOT: lhs = new AccessNode(lhs, parseExpression(prec)); break;
+                case CAST: lhs = new CastNode(lhs, parseExpression(prec)); break;
+                case ADD: operation = BinaryExpression.Operation.ADD; break;
+                case SUB: operation = BinaryExpression.Operation.SUB; break;
+                case MUL: operation = BinaryExpression.Operation.MUL; break;
+                case DIV: operation = BinaryExpression.Operation.DIV; break;
+                case MOD: operation = BinaryExpression.Operation.MOD; break;
+                case POW: operation = BinaryExpression.Operation.POW; break;
+                case EQ: operation = BinaryExpression.Operation.EQ; break;
+                case NEQ: operation = BinaryExpression.Operation.NEQ; break;
+                case LT: operation = BinaryExpression.Operation.LT; break;
+                case GT: operation = BinaryExpression.Operation.GT; break;
+                case LE: operation = BinaryExpression.Operation.LE; break;
+                case GE: operation = BinaryExpression.Operation.GE; break;
+                case AND: operation = BinaryExpression.Operation.AND; break;
+                case OR: operation = BinaryExpression.Operation.OR; break;
+                default: reportError(token); break;
+            }
+
+            if (operation != null) {
+                lhs = new BinaryNode(operation, lhs, parseExpression(prec));
             }
         }
     }
@@ -77,19 +101,16 @@ public class Parser {
 
         switch (token.getKind()) {
             case IDENT:
-                if (peekIf(Token.Kind.LPAREN)) {
-                    return parseFuncCallNode(new TokenNode(token));
-                }
             case INTEGER:
-            case FLOAT:
-            case FALSE:
-            case TRUE:
-            case NULL:
+            case DECIMAL:
+            case BOOLEAN:
                 return new TokenNode(token);
             case ADD:
+                return new UnaryNode(UnaryExpression.Operation.ADD, parseExpression());
             case SUB:
+                return new UnaryNode(UnaryExpression.Operation.SUB, parseExpression());
             case NOT:
-                return new UnaryExpression(token, parseExpression());
+                return new UnaryNode(UnaryExpression.Operation.NOT, parseExpression());
             case QUOTE:
                 node = new TokenNode(expectNext(Token.Kind.STRING));
                 expectNext(Token.Kind.QUOTE);
@@ -100,60 +121,58 @@ public class Parser {
                 return node;
         }
 
-        errors.add(ParserError.unexpectedToken(token));
+        reportError(token);
         return null;
     }
 
-    private Node parseFuncCallNode(Node target) {
-        expectNext(Token.Kind.LPAREN);
+    private List<Node> parseArgs() {
+        List<Node> argNodes = new ArrayList<>();
+        forEach(Token.Kind.RPAREN, () -> argNodes.add(parseArg()));
 
-        List<Node> args = new LinkedList<>();
-        forEach(Token.Kind.RPAREN, () -> args.add(parseFuncArg()));
-
-        expectNext(Token.Kind.RPAREN);
-        return new FuncCallNode(target, args);
+        return argNodes;
     }
 
-    private Node parseFuncArg() {
-        Token name = null;
-
+    private Node parseArg() {
+        Node nameNode = null;
         Node node;
-        FuncArgNode.SubType type;
+        boolean isList;
 
-        if (peekIf(Token.Kind.IDENT, Token.Kind.ASSIGN)) {
-            name = next();
+        if (peekKind() == Token.Kind.IDENT && peekKind(1) == Token.Kind.ASSIGN) {
+            nameNode = new TokenNode(next());
             next();
         }
 
-        if (nextIf(Token.Kind.LCURLY)) {
-            List<Node> values = new LinkedList<>();
-            forEach(Token.Kind.RCURLY, () -> {
-                Token subName = null;
+        if (peekKind() == Token.Kind.LCURLY) {
+            List<Node> values = new ArrayList<>();
+            next();
 
-                if (peekIf(Token.Kind.IDENT, Token.Kind.ASSIGN)) {
-                    subName = next();
+            forEach(Token.Kind.RCURLY, () -> {
+                Node subNameNode = null;
+
+                if (peekKind() == Token.Kind.IDENT && peekKind(1) == Token.Kind.ASSIGN) {
+                    subNameNode = new TokenNode(next());
                     next();
                 }
 
-                values.add(new FuncArgNode(null, FuncArgNode.SubType.FLAT, subName, parseExpression()));
+                values.add(new ArgNode(false, subNameNode, parseExpression()));
             });
 
-            node = new ListNode(null, values);
-            type = FuncArgNode.SubType.LIST;
+            node = new ListNode(values);
+            isList = true;
 
             expectNext(Token.Kind.RCURLY);
         } else {
             node = parseExpression();
-            type = FuncArgNode.SubType.FLAT;
+            isList = false;
         }
 
-        return new FuncArgNode(null, type, name, node);
+        return new ArgNode(isList, nameNode, node);
     }
 
     private void forEach(Token.Kind end, Runnable callback) {
         boolean first = true;
 
-        while (!peekIf(end) && !peekIf(Token.Kind.END)) {
+        while (peekKind() != end && peekKind() != Token.Kind.END) {
             if (first) {
                 first = false;
             } else {
@@ -170,39 +189,34 @@ public class Parser {
                 : Token.END;
     }
 
-    private boolean nextIf(Token.Kind value) {
-        return index < source.size()
-                && source.get(index).getKind() == value
-                && index++ > -1;
-    }
-
     private Token peek() {
         return this.index < source.size()
                 ? source.get(this.index)
                 : Token.END;
     }
 
-    private boolean peekIf(Token.Kind... value) {
-        boolean result = true;
+    private Token.Kind peekKind() {
+        return peekKind(0);
+    }
 
-        for (int i = 0; i < value.length; i++) {
-            int offset = index + i;
-
-            result &= (offset < source.size() && source.get(offset).getKind() == value[i])
-                    || (offset >= source.size() && value[i] == Token.Kind.END);
-        }
-
-        return result;
+    private Token.Kind peekKind(int offset) {
+        return index + offset < source.size()
+                ? source.get(index + offset).getKind()
+                : Token.Kind.END;
     }
 
     private Token expectNext(Token.Kind kind) {
         Token actual = next();
 
         if (actual.getKind() != kind) {
-            errors.add(ParserError.unexpectedToken(kind, actual));
-            return null;
+            reportError(actual);
+            return actual;
         }
 
         return actual;
+    }
+
+    private void reportError(Token token) {
+        errors.add(ParserError.create(token));
     }
 }

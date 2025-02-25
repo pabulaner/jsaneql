@@ -22,20 +22,48 @@ public class StringView {
      */
     private final int end;
 
+    /**
+     * The constructor.
+     */
     public StringView(String source, int begin, int end) {
         this.source = source;
         this.begin = begin;
         this.end = end;
     }
 
+    /**
+     * Returns the combined string view if both have the
+     * same source. Otherwise, an exception is thrown.
+     */
+    public StringView combine(StringView other) {
+        if (other.source == null && source == null) {
+            return this;
+        }
+
+        if (other.source == null || source == null || !other.source.equals(source)) {
+            throw new IllegalArgumentException("String views don't have the same source");
+        }
+
+        return new StringView(source, Math.min(begin, other.begin), Math.max(end, other.end));
+    }
+
+    /**
+     * Returns the source of the string view.
+     */
     public String getSource() {
         return source;
     }
 
+    /**
+     * Returns the beginning index of the string view.
+     */
     public int getBegin() {
         return begin;
     }
 
+    /**
+     * Returns the ending index of the string view.
+     */
     public int getEnd() {
         return end;
     }
@@ -47,7 +75,12 @@ public class StringView {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof StringView casted) {
+        if (obj == null) {
+            return false;
+        }
+
+        if (obj.getClass().equals(getClass())) {
+            StringView casted = (StringView) obj;
             return casted.toString().equals(toString());
         }
 

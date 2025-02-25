@@ -17,9 +17,8 @@ public class Token {
         IDENT,
         STRING,
         INTEGER,
-        FLOAT,
-        FALSE,
-        TRUE,
+        DECIMAL,
+        BOOLEAN,
         NULL,
 
         /**
@@ -73,19 +72,31 @@ public class Token {
      */
     private final StringView value;
 
+    /**
+     * The constructor.
+     */
     public Token(Kind kind, StringView value) {
         this.kind = kind;
         this.value = value;
     }
 
+    /**
+     * Returns the kind of the token.
+     */
     public Kind getKind() {
         return kind;
     }
 
+    /**
+     * Returns the string value of the token.
+     */
     public StringView getValue() {
         return value;
     }
 
+    /**
+     * Returns the line number of the value (starts at 1).
+     */
     public int getSourceLine() {
         int line = 1;
 
@@ -98,6 +109,9 @@ public class Token {
         return line;
     }
 
+    /**
+     * Returns the column index of the value (starts at 1).
+     */
     public int getSourceColumn() {
         int column = 0;
 

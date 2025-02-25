@@ -7,9 +7,17 @@ public class AccessNode extends Node {
     private final Node part;
 
     public AccessNode(Node base, Node part) {
-        super(Type.ACCESS, null);
+        super(Type.ACCESS);
 
         this.base = base;
         this.part = part;
+    }
+
+    public Node getBase() {
+        return base;
+    }
+
+    public Node getPart() {
+        return part;
     }
 }

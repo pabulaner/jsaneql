@@ -13,7 +13,8 @@ public class CastNode extends Node {
     private final Node cast;
 
     public CastNode(Node value, Node cast) {
-        super(Type.CAST, null);
+        super(Type.CAST);
+
         this.value = value;
         this.cast = cast;
     }

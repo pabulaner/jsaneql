@@ -1,17 +1,19 @@
 package de.pabulaner.jsaneql.parser.ast;
 
-import de.pabulaner.jsaneql.tokenizer.Token;
+import de.pabulaner.jsaneql.util.StringView;
 
-public class Node {
+public abstract class Node {
 
+    /**
+     * The types a node can have.
+     */
     public enum Type {
 
         QUERY_BODY,
         TOKEN,
         ACCESS,
-        FUNC_CALL,
-        FUNC_ARG,
-        FUNC_NAMED_ARG,
+        CALL,
+        ARG,
         LIST,
         UNARY_EXPRESSION,
         BINARY_EXPRESSION,
@@ -24,20 +26,16 @@ public class Node {
     private final Type type;
 
     /**
-     * The token that represents the node.
+     * The constructor.
      */
-    private final Token token;
-
-    public Node(Type type, Token token) {
+    public Node(Type type) {
         this.type = type;
-        this.token = token;
     }
 
+    /**
+     * Gets the type.
+     */
     public Type getType() {
         return type;
-    }
-
-    public Token getToken() {
-        return token;
     }
 }

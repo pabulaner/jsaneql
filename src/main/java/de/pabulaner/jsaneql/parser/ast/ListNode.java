@@ -1,7 +1,5 @@
 package de.pabulaner.jsaneql.parser.ast;
 
-import de.pabulaner.jsaneql.tokenizer.Token;
-
 import java.util.List;
 
 public class ListNode extends Node {
@@ -11,8 +9,8 @@ public class ListNode extends Node {
      */
     private final List<Node> values;
 
-    public ListNode(Token token, List<Node> values) {
-        super(Type.LIST, token);
+    public ListNode(List<Node> values) {
+        super(Type.LIST);
         this.values = values;
     }
 

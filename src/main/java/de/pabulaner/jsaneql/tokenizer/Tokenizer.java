@@ -2,7 +2,7 @@ package de.pabulaner.jsaneql.tokenizer;
 
 import de.pabulaner.jsaneql.util.StringView;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Tokenizer {
@@ -23,24 +23,21 @@ public class Tokenizer {
     private String source;
 
     /**
-     * Constructs a new tokenizer.
+     * The constructor.
      */
     public Tokenizer() {
-        this.index = 0;
-        this.source = null;
+        index = 0;
+        source = null;
     }
 
     /**
      * Returns a list containing the parsed tokens.
-     *
-     * @param source the string to generate the tokens for.
-     * @return a list containing the parsed tokens.
      */
     public List<Token> parse(String source) {
         this.index = 0;
         this.source = source;
 
-        List<Token> result = new LinkedList<>();
+        List<Token> result = new ArrayList<>();
         char value;
 
         while (isNotEnd(value = peek())) {
@@ -60,10 +57,6 @@ public class Tokenizer {
 
     /**
      * Returns a single parsed token.
-     *
-     * @param begin the first char of the token used to decide how
-     *              to parse it.
-     * @return a single parsed token
      */
     private Token parseToken(char begin) {
         if (isLetter(begin)) return parseIdent();
@@ -75,11 +68,9 @@ public class Tokenizer {
 
     /**
      * Returns a list of tokens for a string sequence.
-     *
-     * @return a list of tokens for a string sequence
      */
     private List<Token> parseStringTokens() {
-        List<Token> result = new LinkedList<>();
+        List<Token> result = new ArrayList<>();
         result.add(new Token(Token.Kind.QUOTE, new StringView(source, index, ++index)));
         
         int begin = index;
@@ -103,8 +94,6 @@ public class Tokenizer {
 
     /**
      * Returns an identifier token.
-     *
-     * @return an identifier token
      */
     private Token parseIdent() {
         int begin = index++;
@@ -117,8 +106,8 @@ public class Tokenizer {
         StringView value = new StringView(source, begin, index);
 
         switch (value.toString()) {
-            case "false": kind = Token.Kind.FALSE; break;
-            case "true": kind = Token.Kind.TRUE; break;
+            case "false":
+            case "true": kind = Token.Kind.BOOLEAN; break;
             case "null": kind = Token.Kind.NULL; break;
         }
 
@@ -127,8 +116,6 @@ public class Tokenizer {
 
     /**
      * Returns a number token.
-     *
-     * @return a number token
      */
     private Token parseNumber() {
         Token.Kind kind = Token.Kind.INTEGER;
@@ -138,8 +125,8 @@ public class Tokenizer {
             next();
         }
 
-        if (isDot(peek())) {
-            kind = Token.Kind.FLOAT;
+        if (isDot(peek()) && isDigit(peek(1))) {
+            kind = Token.Kind.DECIMAL;
             next();
 
             if (!isDigit(peek())) {
@@ -156,8 +143,6 @@ public class Tokenizer {
 
     /**
      * Returns a special token.
-     *
-     * @return a special token
      */
     private Token parseSpecial() {
         Token.Kind kind = Token.Kind.INVALID;
@@ -206,9 +191,6 @@ public class Tokenizer {
 
     /**
      * Returns true, if the provided value is a whitespace.
-     *
-     * @param value the value to check.
-     * @return true, if the provided value is a whitespace
      */
     private boolean isWhitespace(char value) {
         return value == ' ' || value == '\t' || value == '\n';
@@ -216,9 +198,6 @@ public class Tokenizer {
 
     /**
      * Returns true, if the provided value is a letter.
-     *
-     * @param value the value to check.
-     * @return true, if the provided value is a letter
      */
     private boolean isLetter(char value) {
         return (value >= 'a' && value <= 'z')
@@ -228,9 +207,6 @@ public class Tokenizer {
 
     /**
      * Returns true, if the provided value is a digit.
-     *
-     * @param value the value to check.
-     * @return true, if the provided value is a digit
      */
     private boolean isDigit(char value) {
         return value >= '0' && value <= '9';
@@ -238,9 +214,6 @@ public class Tokenizer {
 
     /**
      * Returns true, if the provided value is a quote.
-     *
-     * @param value the value to check.
-     * @return true, if the provided value is a quote
      */
     private boolean isQuote(char value) {
         return value == '\'';
@@ -248,9 +221,6 @@ public class Tokenizer {
 
     /**
      * Returns true, if the provided value is a dot.
-     *
-     * @param value the value to check.
-     * @return true, if the provided value is a dot
      */
     private boolean isDot(char value) {
         return value == '.';
@@ -258,9 +228,6 @@ public class Tokenizer {
 
     /**
      * Returns true, if the provided value is a special character.
-     *
-     * @param value the value to check.
-     * @return true, if the provided value is a special character
      */
     private boolean isSpecial(char value) {
         String special = "+-*/%!=<>&|.,:(){}";
@@ -269,9 +236,6 @@ public class Tokenizer {
 
     /**
      * Returns true, if the provided value is not the end.
-     *
-     * @param value the value to check.
-     * @return true, if the provided value is not the end
      */
     private boolean isNotEnd(char value) {
         return value != END;
@@ -279,21 +243,16 @@ public class Tokenizer {
 
     /**
      * Returns the next or end token and increments the index.
-     *
-     * @return the next or end token
      */
     private char next() {
-        return this.index < source.length()
-                ? source.charAt(this.index++)
+        return index < source.length()
+                ? source.charAt(index++)
                 : END;
     }
 
     /**
      * Returns true if the next char is equal to the provided char
      * and only then increments the index.
-     *
-     * @param value the value to compare to.
-     * @return the next or end token
      */
     private boolean nextIf(char value) {
         if (index < source.length()) {
@@ -308,12 +267,17 @@ public class Tokenizer {
 
     /**
      * Returns the next or end token, but does not increment the index.
-     *
-     * @return the next or end token
      */
     private char peek() {
-        return this.index < source.length()
-                ? source.charAt(this.index)
+        return peek(0);
+    }
+
+    /**
+     * Returns the next or end token, but does not increment the index.
+     */
+    private char peek(int offset) {
+        return index + offset < source.length()
+                ? source.charAt(index + offset)
                 : END;
     }
 }
