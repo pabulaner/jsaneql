@@ -1,4 +1,4 @@
-package de.pabulaner.jsaneql.semana.functions;
+package de.pabulaner.jsaneql.semana.function;
 
 public enum Builtin {
 

@@ -1,4 +1,4 @@
-package de.pabulaner.jsaneql.semana.functions;
+package de.pabulaner.jsaneql.semana.function;
 
 import de.pabulaner.jsaneql.schema.ValueType;
 
@@ -31,7 +31,7 @@ public class Functions {
         table.add(new Function(Builtin.FILTER, "filter", new FunctionArg("condition", FunctionArg.Type.EXPRESSION)));
         table.add(new Function(Builtin.JOIN, "join", new FunctionArg("table", FunctionArg.Type.TABLE), new FunctionArg("on", FunctionArg.Type.EXPRESSION), new FunctionArg("type", FunctionArg.Type.SYMBOL, true)));
         table.add(new Function(Builtin.GROUP_BY, "groupby", new FunctionArg("groups", FunctionArg.Type.EXPRESSION_LIST), new FunctionArg("aggregates", FunctionArg.Type.EXPRESSION_LIST, true)));
-        table.add(new Function(Builtin.ORDER_BY, "orderby", new FunctionArg("expressions", FunctionArg.Type.EXPRESSION_LIST), new FunctionArg("limit", FunctionArg.Type.EXPRESSION, true), new FunctionArg("offset", FunctionArg.Type.EXPRESSION, true)));
+        table.add(new Function(Builtin.ORDER_BY, "orderby", new FunctionArg("expressions", FunctionArg.Type.EXPRESSION_LIST, true), new FunctionArg("limit", FunctionArg.Type.EXPRESSION, true), new FunctionArg("offset", FunctionArg.Type.EXPRESSION, true)));
         table.add(new Function(Builtin.MAP, "map", new FunctionArg("expressions", FunctionArg.Type.EXPRESSION_LIST)));
         table.add(new Function(Builtin.PROJECT, "project", new FunctionArg("expressions", FunctionArg.Type.EXPRESSION_LIST)));
         table.add(new Function(Builtin.AS, "as", new FunctionArg("name", FunctionArg.Type.SYMBOL)));

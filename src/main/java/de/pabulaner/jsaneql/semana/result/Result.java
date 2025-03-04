@@ -2,7 +2,7 @@ package de.pabulaner.jsaneql.semana.result;
 
 import de.pabulaner.jsaneql.algebra.expression.Expression;
 import de.pabulaner.jsaneql.algebra.operator.Operator;
-import de.pabulaner.jsaneql.semana.scope.Scope;
+import de.pabulaner.jsaneql.semana.binding.Binding;
 
 public class Result {
 
@@ -18,8 +18,8 @@ public class Result {
         this(new ScalarInfo(expression, orderingInfo), null);
     }
 
-    public Result(Operator operator, Scope scope) {
-        this(null, new TableInfo(operator, scope));
+    public Result(Operator operator, Binding binding) {
+        this(null, new TableInfo(operator, binding));
     }
 
     private Result(ScalarInfo scalar, TableInfo table) {
@@ -47,7 +47,7 @@ public class Result {
         return table.getOperator();
     }
 
-    public Scope scope() {
-        return table.getScope();
+    public Binding binding() {
+        return table.getBinding();
     }
 }

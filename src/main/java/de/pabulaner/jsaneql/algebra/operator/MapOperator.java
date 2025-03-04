@@ -7,7 +7,7 @@ import java.util.List;
 
 public class MapOperator implements Operator {
 
-    public class Entry {
+    public static class Entry {
 
         private final IU iu;
 
@@ -16,6 +16,14 @@ public class MapOperator implements Operator {
         public Entry(IU iu, Expression value) {
             this.iu = iu;
             this.value = value;
+        }
+
+        public IU getIU() {
+            return iu;
+        }
+
+        public Expression getValue() {
+            return value;
         }
     }
 

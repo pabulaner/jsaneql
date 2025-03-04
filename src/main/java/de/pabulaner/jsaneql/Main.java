@@ -31,7 +31,7 @@ public class Main {
         Parser parser = new Parser();
         SemanticAnalyzer analyzer = new SemanticAnalyzer(new TPCHDatabase());
 
-        List<Token> tokens = tokenizer.parse("(10 * 30).desc()");
+        List<Token> tokens = tokenizer.parse("lineitem.map({hello:=10}).orderby({2.desc()}, limit:=5, offset:=10)");
         QueryNode ast = parser.parse(tokens);
         Result result = analyzer.parse(ast);
 

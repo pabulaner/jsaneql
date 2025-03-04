@@ -1,4 +1,4 @@
-package de.pabulaner.jsaneql.semana.functions;
+package de.pabulaner.jsaneql.semana.function;
 
 import java.util.Arrays;
 import java.util.List;
