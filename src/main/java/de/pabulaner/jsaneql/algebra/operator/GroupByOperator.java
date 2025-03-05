@@ -2,8 +2,10 @@ package de.pabulaner.jsaneql.algebra.operator;
 
 import de.pabulaner.jsaneql.algebra.IU;
 import de.pabulaner.jsaneql.algebra.expression.Expression;
+import de.pabulaner.jsaneql.schema.Value;
 
 import java.util.List;
+import java.util.Map;
 
 public class GroupByOperator implements Operator {
 
@@ -45,5 +47,10 @@ public class GroupByOperator implements Operator {
         this.input = input;
         this.groupBy = groupBy;
         this.aggregates = aggregates;
+    }
+
+    @Override
+    public Map<IU, Value> next() {
+        return null;
     }
 }

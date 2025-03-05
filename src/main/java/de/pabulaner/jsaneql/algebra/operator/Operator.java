@@ -1,8 +1,13 @@
 package de.pabulaner.jsaneql.algebra.operator;
 
+import de.pabulaner.jsaneql.algebra.IU;
 import de.pabulaner.jsaneql.schema.TableRow;
+import de.pabulaner.jsaneql.schema.Value;
+
+import java.util.Iterator;
+import java.util.Map;
 
 public interface Operator {
 
-    // TableRow produce(TableRow input);
+    Map<IU, Value> next();
 }

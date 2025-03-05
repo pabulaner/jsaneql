@@ -1,6 +1,10 @@
 package de.pabulaner.jsaneql.algebra.expression;
 
+import de.pabulaner.jsaneql.algebra.IU;
+import de.pabulaner.jsaneql.schema.Value;
 import de.pabulaner.jsaneql.schema.ValueType;
+
+import java.util.Map;
 
 public class CastExpression implements Expression {
 
@@ -11,6 +15,11 @@ public class CastExpression implements Expression {
     public CastExpression(Expression value, ValueType type) {
         this.value = value;
         this.type = type;
+    }
+
+    @Override
+    public Value getValue(Map<IU, Value> row) {
+        return null;
     }
 
     @Override

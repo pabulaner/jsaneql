@@ -100,12 +100,16 @@ public class SemanticAnalyzer {
             }
 
             Scope scope = binding.addScope(name);
+            List<IU> columns = new ArrayList<>();
 
             for (TableColumn column : table.getColumns()) {
-                binding.addBinding(scope, column.getName(), new IU(column.getType()));
+                iu = new IU(column.getType());
+
+                binding.addBinding(scope, column.getName(), iu);
+                columns.add(iu);
             }
 
-            return new Result(new ScanOperator(table), binding);
+            return new Result(new ScanOperator(table, columns), binding);
         } else {
             ValueType type;
 
