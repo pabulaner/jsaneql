@@ -9,7 +9,7 @@ public class TPCHTableColumn implements TableColumn {
 
     private final String name;
 
-    public TPCHTableColumn(ValueType type, String name) {
+    public TPCHTableColumn(String name, ValueType type) {
         this.type = type;
         this.name = name;
     }

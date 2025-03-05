@@ -19,16 +19,20 @@ public class Binding {
 
     private final Map<String, Scope> scopes;
 
+    private GroupByScope groupByScope;
+
     public Binding() {
         columns = new ArrayList<>();
         columnLookup = new HashMap<>();
         scopes = new HashMap<>();
+        groupByScope = null;
     }
 
     public Binding(Binding binding) {
         columns = new ArrayList<>();
         columnLookup = new HashMap<>(binding.columnLookup);
         scopes = new HashMap<>();
+        groupByScope = binding.groupByScope;
 
         binding.columns.forEach(column -> columns.add(new Column(column.getName(), column.getIU())));
         binding.scopes.forEach((key, value) -> scopes.put(key, new Scope(value)));
@@ -110,5 +114,13 @@ public class Binding {
 
     public Map<String, Scope> getScopes() {
         return scopes;
+    }
+
+    public GroupByScope getGroupByScope() {
+        return groupByScope;
+    }
+
+    public void setGroupByScope(GroupByScope groupByScope) {
+        this.groupByScope = groupByScope;
     }
 }

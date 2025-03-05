@@ -78,12 +78,12 @@ public class Parser {
                 case DIV: operation = BinaryExpression.Operation.DIV; break;
                 case MOD: operation = BinaryExpression.Operation.MOD; break;
                 case POW: operation = BinaryExpression.Operation.POW; break;
-                case EQ: operation = BinaryExpression.Operation.EQ; break;
-                case NEQ: operation = BinaryExpression.Operation.NEQ; break;
-                case LT: operation = BinaryExpression.Operation.LT; break;
-                case GT: operation = BinaryExpression.Operation.GT; break;
-                case LE: operation = BinaryExpression.Operation.LE; break;
-                case GE: operation = BinaryExpression.Operation.GE; break;
+                case EQ: operation = BinaryExpression.Operation.EQUALS; break;
+                case NEQ: operation = BinaryExpression.Operation.NOT_EQUALS; break;
+                case LT: operation = BinaryExpression.Operation.LESS; break;
+                case GT: operation = BinaryExpression.Operation.GREATER; break;
+                case LE: operation = BinaryExpression.Operation.LESS_EQUALS; break;
+                case GE: operation = BinaryExpression.Operation.GREATER_EQUALS; break;
                 case AND: operation = BinaryExpression.Operation.AND; break;
                 case OR: operation = BinaryExpression.Operation.OR; break;
                 default: reportError(token); break;

@@ -14,24 +14,25 @@ public class Main {
 
     public static void main(String[] args) {
         String source = "lineitem\n" +
-                        "    .filter(l_shipdate <= '1998-12-01'::date - '90 days'::interval)\n" +
-                        "    .groupby({l_returnflag, l_linestatus}, {\n" +
-                        "        sum_qty:=sum(l_quantity),\n" +
-                        "        sum_base_price:=sum(l_extendedprice),\n" +
-                        "        sum_disc_price:=sum(l_extendedprice * (1 - l_discount)),\n" +
-                        "        sum_charge:=sum(l_extendedprice * (1 - l_discount) * (1 + l_tax)),\n" +
-                        "        avg_qty:=avg(l_quantity),\n" +
-                        "        avg_price:=avg(l_extendedprice),\n" +
-                        "        avg_disc:=avg(l_discount),\n" +
-                        "        count_order:=count()\n" +
-                        "    })\n" +
-                        "    .orderby({l_returnflag, l_linestatus})\n";
+                "    .filter(l_shipdate <= '1998-12-01'::date - '90 days'::interval)\n" +
+                "    .groupby({l_returnflag, l_linestatus}, {\n" +
+                "        sum_qty:=sum(l_quantity),\n" +
+                "        sum_base_price:=sum(l_extendedprice),\n" +
+                "        sum_disc_price:=sum(l_extendedprice * (1 - l_discount)),\n" +
+                "        sum_charge:=sum(l_extendedprice * (1 - l_discount) * (1 + l_tax)),\n" +
+                "        avg_qty:=avg(l_quantity),\n" +
+                "        avg_price:=avg(l_extendedprice),\n" +
+                "        avg_disc:=avg(l_discount),\n" +
+                "        count_order:=count()\n" +
+                "    })\n" +
+                "    .orderby({l_returnflag, l_linestatus})" +
+                "   .map({hello:=4 * 2})";
 
         Tokenizer tokenizer = new Tokenizer();
         Parser parser = new Parser();
         SemanticAnalyzer analyzer = new SemanticAnalyzer(new TPCHDatabase());
 
-        List<Token> tokens = tokenizer.parse("lineitem.map({hello:=10}).orderby({2.desc()}, limit:=5, offset:=10)");
+        List<Token> tokens = tokenizer.parse(source);
         QueryNode ast = parser.parse(tokens);
         Result result = analyzer.parse(ast);
 
