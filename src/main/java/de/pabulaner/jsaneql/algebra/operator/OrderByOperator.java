@@ -68,7 +68,7 @@ public class OrderByOperator implements Operator {
             Value firstValue = entry.value.getValue(first);
             Value secondValue = entry.value.getValue(second);
 
-            long value = firstValue.getInteger() - secondValue.getInteger();
+            long value = firstValue.compare(secondValue);
 
             if (value < 0) return entry.descending ? 1 : -1;
             if (value > 0) return entry.descending ? -1 : 1;

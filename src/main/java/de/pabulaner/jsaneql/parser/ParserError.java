@@ -17,4 +17,8 @@ public class ParserError {
         String message = "Unexpected token: " + token.getValue();
         return new ParserError(token,  message);
     }
+
+    public String getMessage() {
+        return message;
+    }
 }

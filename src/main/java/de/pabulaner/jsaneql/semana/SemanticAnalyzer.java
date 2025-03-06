@@ -487,7 +487,7 @@ public class SemanticAnalyzer {
             return Long.valueOf(tokenNode.getView().toString());
         };
 
-        long limit = args.get(1) != null ? handleConstant.apply("limit", args.get(1)) : 0;
+        long limit = args.get(1) != null ? handleConstant.apply("limit", args.get(1)) : Long.MAX_VALUE;
         long offset = args.get(2) != null ? handleConstant.apply("offset", args.get(2)) : 0;
 
         return new Result(new OrderByOperator(base.table(), entries, limit, offset), base.binding());

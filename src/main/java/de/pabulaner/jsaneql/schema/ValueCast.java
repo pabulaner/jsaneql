@@ -4,6 +4,8 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.Period;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 
 public class ValueCast {
 
@@ -73,7 +75,11 @@ public class ValueCast {
 
     private static LocalDateTime castToDate(Value value) {
         switch (value.getType()) {
-            case STRING: return LocalDateTime.from(DateTimeFormatter.ofPattern("yyyy-MM-dd").parse(value.getString()));
+            case STRING: return LocalDateTime.parse(value.getString(), new DateTimeFormatterBuilder()
+                    .appendPattern("yyyy-MM-dd[ HH:mm]")
+                    .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+                    .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
+                    .toFormatter());
             case DATE: return value.getDate();
         }
 

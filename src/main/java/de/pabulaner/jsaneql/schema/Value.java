@@ -1,26 +1,11 @@
 package de.pabulaner.jsaneql.schema;
 
-import de.pabulaner.jsaneql.exception.IllegalTypeException;
-
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.regex.Pattern;
 
 public class Value {
-
-    private static final Map<Class<?>, ValueType> TYPE_MAP = new HashMap<Class<?>, ValueType>() {{
-        put(String.class, ValueType.STRING);
-        put(Long.class, ValueType.INTEGER);
-        put(Double.class, ValueType.DECIMAL);
-        put(Boolean.class, ValueType.BOOLEAN);
-        put(Date.class, ValueType.DATE);
-        put(Duration.class, ValueType.INTERVAL);
-    }};
 
     private final ValueType type;
 
@@ -76,7 +61,7 @@ public class Value {
             return ofDate(getDate().plus(other.getInterval()));
         }
 
-        throw new IllegalArgumentException();
+        throw new IllegalStateException();
     }
 
     public Value sub(Value other) {
@@ -92,7 +77,7 @@ public class Value {
             return ofDate(getDate().minus(other.getInterval()));
         }
 
-        throw new IllegalArgumentException();
+        throw new IllegalStateException();
     }
 
     public Value mul(Value other) {
@@ -104,7 +89,7 @@ public class Value {
             }
         }
 
-        throw new IllegalArgumentException();
+        throw new IllegalStateException();
     }
 
     public Value div(Value other) {
@@ -112,7 +97,7 @@ public class Value {
             return ofDecimal(getDecimal() / other.getDecimal());
         }
 
-        throw new IllegalArgumentException();
+        throw new IllegalStateException();
     }
 
     public Value mod(Value other) {
@@ -124,7 +109,7 @@ public class Value {
             }
         }
 
-        throw new IllegalArgumentException();
+        throw new IllegalStateException();
     }
 
     public Value pow(Value other) {
@@ -136,7 +121,7 @@ public class Value {
             }
         }
 
-        throw new IllegalArgumentException();
+        throw new IllegalStateException();
     }
 
     public Value like(Value other) {
@@ -145,7 +130,7 @@ public class Value {
             return Value.ofBoolean(Pattern.compile(pattern).matcher(getString()).matches());
         }
 
-        throw new IllegalArgumentException();
+        throw new IllegalStateException();
     }
 
     public int compare(Value other) {
@@ -177,7 +162,7 @@ public class Value {
             case NULL: return 0;
         }
 
-        throw new IllegalArgumentException();
+        throw new IllegalStateException();
     }
 
     private boolean isNumeric() {
@@ -197,7 +182,7 @@ public class Value {
             return (String) value;
         }
 
-        throw new IllegalTypeException();
+        throw new IllegalStateException();
     }
 
     public long getInteger() {
@@ -209,7 +194,7 @@ public class Value {
             return (long) (double) value;
         }
 
-        throw new IllegalTypeException();
+        throw new IllegalStateException();
     }
 
     public double getDecimal() {
@@ -221,7 +206,7 @@ public class Value {
             return (double) value;
         }
 
-        throw new IllegalTypeException();
+        throw new IllegalStateException();
     }
 
     public boolean getBoolean() {
@@ -229,7 +214,7 @@ public class Value {
             return (boolean) value;
         }
 
-        throw new IllegalTypeException();
+        throw new IllegalStateException();
     }
 
     public LocalDateTime getDate() {
@@ -237,7 +222,7 @@ public class Value {
             return (LocalDateTime) value;
         }
 
-        throw new IllegalTypeException();
+        throw new IllegalStateException();
     }
 
     public Period getInterval() {
@@ -245,6 +230,11 @@ public class Value {
             return (Period) value;
         }
 
-        throw new IllegalTypeException();
+        throw new IllegalStateException();
+    }
+
+    @Override
+    public String toString() {
+        return value != null ? value.toString() : null;
     }
 }

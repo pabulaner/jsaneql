@@ -48,6 +48,9 @@ public class Binding {
             return null;
         }
 
+        scope = new Scope();
+        scopes.put(name, scope);
+
         return scope;
     }
 
@@ -106,6 +109,10 @@ public class Binding {
                 scope.setAmbiguous(true);
             }
         }
+    }
+
+    public List<Column> getColumns() {
+        return columns;
     }
 
     public Map<String, IU> getColumnLookup() {

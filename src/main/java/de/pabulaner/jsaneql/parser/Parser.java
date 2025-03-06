@@ -219,4 +219,8 @@ public class Parser {
     private void reportError(Token token) {
         errors.add(ParserError.create(token));
     }
+
+    public List<ParserError> getErrors() {
+        return errors;
+    }
 }

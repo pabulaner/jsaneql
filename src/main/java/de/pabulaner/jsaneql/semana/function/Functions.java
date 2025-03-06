@@ -54,17 +54,17 @@ public class Functions {
     }
 
     public Function getFunction(ValueType type, String name) {
-        List<Function> functions = null;
+        List<Function> functions = new ArrayList<>();
 
         if (type == null) {
             functions = free;
         } else {
             switch (type) {
-                case STRING: functions = text; break;
+                case STRING: functions.addAll(text); functions.addAll(scalar); break;
                 case INTEGER:
                 case DECIMAL:
-                case BOOLEAN: functions = scalar; break;
-                case DATE: functions = date; break;
+                case BOOLEAN: functions.addAll(scalar); break;
+                case DATE: functions.addAll(date); functions.addAll(scalar); break;
             }
         }
 

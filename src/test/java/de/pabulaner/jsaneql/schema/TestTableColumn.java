@@ -1,15 +1,12 @@
-package de.pabulaner.jsaneql.schema.tpch;
+package de.pabulaner.jsaneql.schema;
 
-import de.pabulaner.jsaneql.schema.TableColumn;
-import de.pabulaner.jsaneql.schema.ValueType;
-
-public class TPCHTableColumn implements TableColumn {
+public class TestTableColumn implements TableColumn {
 
     private final String name;
 
     private final ValueType type;
 
-    public TPCHTableColumn(String name, ValueType type) {
+    public TestTableColumn(String name, ValueType type) {
         this.name = name;
         this.type = type;
     }
