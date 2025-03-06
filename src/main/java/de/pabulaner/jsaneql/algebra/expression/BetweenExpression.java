@@ -3,7 +3,6 @@ package de.pabulaner.jsaneql.algebra.expression;
 import de.pabulaner.jsaneql.algebra.IU;
 import de.pabulaner.jsaneql.schema.Value;
 import de.pabulaner.jsaneql.schema.ValueType;
-import de.pabulaner.jsaneql.schema.value.BooleanValue;
 
 import java.util.Map;
 
@@ -27,7 +26,7 @@ public class BetweenExpression implements Expression {
         Value lowerValue = lower.getValue(row);
         Value upperValue = upper.getValue(row);
 
-        return new BooleanValue(baseValue.compare(lowerValue) >= 0 && baseValue.compare(upperValue) <= 0);
+        return Value.ofBoolean(baseValue.compare(lowerValue) >= 0 && baseValue.compare(upperValue) <= 0);
     }
 
     @Override

@@ -3,8 +3,8 @@ package de.pabulaner.jsaneql.algebra.expression;
 import de.pabulaner.jsaneql.algebra.IU;
 import de.pabulaner.jsaneql.schema.Value;
 import de.pabulaner.jsaneql.schema.ValueType;
-import de.pabulaner.jsaneql.schema.value.IntegerValue;
 
+import java.time.LocalDateTime;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -31,19 +31,16 @@ public class ExtractExpression implements Expression {
     @Override
     public Value getValue(Map<IU, Value> row) {
         Value dateValue = input.getValue(row);
-        Date date = dateValue.getDate();
-        Calendar calendar = new GregorianCalendar();
+        LocalDateTime date = dateValue.getDate();
         long value = 0;
 
-        calendar.setTime(date);
-
         switch (part) {
-            case YEAR: value = calendar.get(Calendar.YEAR); break;
-            case MONTH: value = calendar.get(Calendar.MONTH); break;
-            case DAY: value = calendar.get(Calendar.DAY_OF_MONTH); break;
+            case YEAR: value = date.getYear(); break;
+            case MONTH: value = date.getMonthValue(); break;
+            case DAY: value = date.getDayOfMonth(); break;
         }
 
-        return new IntegerValue(value);
+        return Value.ofInteger(value);
     }
 
     @Override

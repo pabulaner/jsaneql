@@ -35,7 +35,5 @@ public class Main {
         List<Token> tokens = tokenizer.parse(source);
         QueryNode ast = parser.parse(tokens);
         Result result = analyzer.parse(ast);
-
-        System.out.println(result);
     }
 }

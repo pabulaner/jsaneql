@@ -1,6 +1,5 @@
 package de.pabulaner.jsaneql.semana.function;
 
-import com.sun.org.apache.bcel.internal.generic.FNEG;
 import de.pabulaner.jsaneql.schema.ValueType;
 
 import java.util.ArrayList;

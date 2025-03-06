@@ -3,7 +3,6 @@ package de.pabulaner.jsaneql.algebra.expression;
 import de.pabulaner.jsaneql.algebra.IU;
 import de.pabulaner.jsaneql.schema.Value;
 import de.pabulaner.jsaneql.schema.ValueType;
-import de.pabulaner.jsaneql.schema.value.StringValue;
 
 import java.util.Map;
 

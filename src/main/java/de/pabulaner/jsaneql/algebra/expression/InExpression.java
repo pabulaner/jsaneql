@@ -3,7 +3,6 @@ package de.pabulaner.jsaneql.algebra.expression;
 import de.pabulaner.jsaneql.algebra.IU;
 import de.pabulaner.jsaneql.schema.Value;
 import de.pabulaner.jsaneql.schema.ValueType;
-import de.pabulaner.jsaneql.schema.value.BooleanValue;
 
 import java.util.List;
 import java.util.Map;
@@ -28,7 +27,7 @@ public class InExpression implements Expression {
             result |= probeValue.compare(value.getValue(row)) == 0;
         }
 
-        return new BooleanValue(result);
+        return Value.ofBoolean(result);
     }
 
     @Override

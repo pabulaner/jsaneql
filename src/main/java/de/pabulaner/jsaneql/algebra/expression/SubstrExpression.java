@@ -3,7 +3,6 @@ package de.pabulaner.jsaneql.algebra.expression;
 import de.pabulaner.jsaneql.algebra.IU;
 import de.pabulaner.jsaneql.schema.Value;
 import de.pabulaner.jsaneql.schema.ValueType;
-import de.pabulaner.jsaneql.schema.value.StringValue;
 
 import java.util.Map;
 
@@ -23,11 +22,13 @@ public class SubstrExpression implements Expression {
 
     @Override
     public Value getValue(Map<IU, Value> row) {
-        Value valueValue = value.getValue(row);
         Value fromValue = from.getValue(row);
         Value lengthValue = length.getValue(row);
 
-        return new StringValue(valueValue.getString().substring((int) fromValue.getInteger() - 1, (int) fromValue.add(lengthValue).getInteger() - 1));
+        int begin = (int) fromValue.getInteger() - 1;
+        int end = (int) fromValue.add(lengthValue).getInteger() - 1;
+
+        return Value.ofString(value.getValue(row).getString().substring(begin, end));
     }
 
     @Override

@@ -3,8 +3,6 @@ package de.pabulaner.jsaneql.algebra.expression;
 import de.pabulaner.jsaneql.algebra.IU;
 import de.pabulaner.jsaneql.schema.Value;
 import de.pabulaner.jsaneql.schema.ValueType;
-import de.pabulaner.jsaneql.schema.value.BooleanValue;
-import de.pabulaner.jsaneql.schema.value.IntegerValue;
 
 import java.util.Map;
 
@@ -32,8 +30,8 @@ public class UnaryExpression implements Expression {
 
         switch (operation) {
             case ADD: return value;
-            case SUB: return new IntegerValue(0).sub(value);
-            case NOT: return new BooleanValue(!value.getBoolean());
+            case SUB: return Value.ofInteger(0L).sub(value);
+            case NOT: return Value.ofBoolean(!value.getBoolean());
         }
 
         return null;

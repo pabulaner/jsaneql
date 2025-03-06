@@ -3,8 +3,6 @@ package de.pabulaner.jsaneql.algebra.expression;
 import de.pabulaner.jsaneql.algebra.IU;
 import de.pabulaner.jsaneql.schema.Value;
 import de.pabulaner.jsaneql.schema.ValueType;
-import de.pabulaner.jsaneql.schema.value.BooleanValue;
-import de.pabulaner.jsaneql.schema.value.StringValue;
 
 import java.util.Map;
 
@@ -56,15 +54,15 @@ public class BinaryExpression implements Expression {
             case DIV: return leftValue.div(rightValue);
             case MOD: return leftValue.mod(rightValue);
             case POW: return leftValue.pow(rightValue);
-            case EQUALS: return new BooleanValue(leftValue.compare(rightValue) == 0);
-            case NOT_EQUALS: return new BooleanValue(leftValue.compare(rightValue) != 0);
-            case LESS: return new BooleanValue(leftValue.compare(rightValue) < 0);
-            case GREATER: return new BooleanValue(leftValue.compare(rightValue) > 0);
-            case LESS_EQUALS: return new BooleanValue(leftValue.compare(rightValue) <= 0);
-            case GREATER_EQUALS: return new BooleanValue(leftValue.compare(rightValue) >= 0);
-            case LIKE: return new BooleanValue(((StringValue) leftValue).like(rightValue));
-            case AND: return new BooleanValue(leftValue.getBoolean() && rightValue.getBoolean());
-            case OR: return new BooleanValue(leftValue.getBoolean() || rightValue.getBoolean());
+            case EQUALS: return Value.ofBoolean(leftValue.compare(rightValue) == 0);
+            case NOT_EQUALS: return Value.ofBoolean(leftValue.compare(rightValue) != 0);
+            case LESS: return Value.ofBoolean(leftValue.compare(rightValue) < 0);
+            case GREATER: return Value.ofBoolean(leftValue.compare(rightValue) > 0);
+            case LESS_EQUALS: return Value.ofBoolean(leftValue.compare(rightValue) <= 0);
+            case GREATER_EQUALS: return Value.ofBoolean(leftValue.compare(rightValue) >= 0);
+            case LIKE: return leftValue.like(rightValue);
+            case AND: return Value.ofBoolean(leftValue.getBoolean() && rightValue.getBoolean());
+            case OR: return Value.ofBoolean(leftValue.getBoolean() || rightValue.getBoolean());
         }
 
         return null;
