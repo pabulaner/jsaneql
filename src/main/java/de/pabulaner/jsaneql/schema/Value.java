@@ -3,6 +3,7 @@ package de.pabulaner.jsaneql.schema;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 public class Value {
@@ -17,7 +18,7 @@ public class Value {
     }
 
     public static Value ofString(String value) {
-        return new Value(ValueType.STRING, value);
+        return new Value(ValueType.TEXT, value);
     }
 
     public static Value ofInteger(Long value) {
@@ -45,7 +46,7 @@ public class Value {
     }
 
     public Value add(Value other) {
-        if (type == ValueType.STRING && other.type == ValueType.STRING) {
+        if (type == ValueType.TEXT && other.type == ValueType.TEXT) {
             return ofString(getString() + other.getString());
         }
 
@@ -125,7 +126,7 @@ public class Value {
     }
 
     public Value like(Value other) {
-        if (type == ValueType.STRING && other.type == ValueType.STRING) {
+        if (type == ValueType.TEXT && other.type == ValueType.TEXT) {
             String pattern = other.getString().replace("%", ".*");
             return Value.ofBoolean(Pattern.compile(pattern).matcher(getString()).matches());
         }
@@ -155,7 +156,7 @@ public class Value {
         }
 
         switch (type) {
-            case STRING: return getString().compareTo(other.getString());
+            case TEXT: return getString().compareTo(other.getString());
             case BOOLEAN: return (getBoolean() ? 1 : 0) - (other.getBoolean() ? 1 : 0);
             case DATE: return getDate().compareTo(other.getDate());
             case INTERVAL: return LocalDate.MIN.plus(getInterval()).compareTo(LocalDate.MIN.plus(other.getInterval()));
@@ -178,7 +179,7 @@ public class Value {
     }
 
     public String getString() {
-        if (type == ValueType.STRING) {
+        if (type == ValueType.TEXT) {
             return (String) value;
         }
 
@@ -231,6 +232,30 @@ public class Value {
         }
 
         throw new IllegalStateException();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(value);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+
+        if (obj instanceof Value) {
+            Value casted = (Value) obj;
+
+            if (casted.value == null || value == null) {
+                return casted.value == null && value == null;
+            }
+
+            return casted.value.equals(value);
+        }
+
+        return false;
     }
 
     @Override

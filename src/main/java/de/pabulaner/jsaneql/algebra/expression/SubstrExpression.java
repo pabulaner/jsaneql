@@ -33,6 +33,6 @@ public class SubstrExpression implements Expression {
 
     @Override
     public ValueType getType() {
-        return ValueType.STRING;
+        return ValueType.TEXT;
     }
 }

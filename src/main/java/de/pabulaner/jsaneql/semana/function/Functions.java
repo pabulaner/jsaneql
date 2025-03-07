@@ -60,7 +60,7 @@ public class Functions {
             functions = free;
         } else {
             switch (type) {
-                case STRING: functions.addAll(text); functions.addAll(scalar); break;
+                case TEXT: functions.addAll(text); functions.addAll(scalar); break;
                 case INTEGER:
                 case DECIMAL:
                 case BOOLEAN: functions.addAll(scalar); break;

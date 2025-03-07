@@ -114,7 +114,7 @@ public class SemanticAnalyzer {
             ValueType type;
 
             switch (token.getKind()) {
-                case STRING: type = ValueType.STRING; break;
+                case STRING: type = ValueType.TEXT; break;
                 case INTEGER: type = ValueType.INTEGER; break;
                 case DECIMAL: type = ValueType.DECIMAL; break;
                 case BOOLEAN: type = ValueType.BOOLEAN; break;
@@ -290,7 +290,7 @@ public class SemanticAnalyzer {
     private Result parseLike(Binding binding, Result base, List<ArgNode> args) {
         Result pattern = scalarArgument("like", "pattern", binding, args.get(0));
 
-        if (base.scalar().getType() != ValueType.STRING || pattern.scalar().getType() != ValueType.STRING) {
+        if (base.scalar().getType() != ValueType.TEXT || pattern.scalar().getType() != ValueType.TEXT) {
             reportError("'like' requires string argument");
         }
 
@@ -599,8 +599,8 @@ public class SemanticAnalyzer {
                 resultType[0] = left.scalar().getType() == ValueType.DECIMAL || right.scalar().getType() == ValueType.DECIMAL
                         ? ValueType.DECIMAL
                         : ValueType.INTEGER;
-            } else if (ast.getOperation() == BinaryExpression.Operation.ADD && left.scalar().getType() == ValueType.STRING && right.scalar().getType() == ValueType.STRING) {
-                resultType[0] = ValueType.STRING;
+            } else if (ast.getOperation() == BinaryExpression.Operation.ADD && left.scalar().getType() == ValueType.TEXT && right.scalar().getType() == ValueType.TEXT) {
+                resultType[0] = ValueType.TEXT;
             } else if ((ast.getOperation() == BinaryExpression.Operation.ADD || ast.getOperation() == BinaryExpression.Operation.SUB) && left.scalar().getType() == ValueType.DATE && right.scalar().getType() == ValueType.INTERVAL) {
                 resultType[0] = ValueType.DATE;
             } else {
@@ -655,7 +655,7 @@ public class SemanticAnalyzer {
         }
 
         switch (cast) {
-            case "string": type = ValueType.STRING; break;
+            case "string": type = ValueType.TEXT; break;
             case "integer": type = ValueType.INTEGER; break;
             case "decimal": type = ValueType.DECIMAL; break;
             case "boolean": type = ValueType.BOOLEAN; break;
@@ -751,7 +751,7 @@ public class SemanticAnalyzer {
         boolean comparable = false;
 
         switch (left.scalar().getType()) {
-            case STRING: comparable = right.scalar().getType() == ValueType.STRING; break;
+            case TEXT: comparable = right.scalar().getType() == ValueType.TEXT; break;
             case INTEGER:
             case DECIMAL: comparable = right.scalar().getType() == ValueType.INTEGER || right.scalar().getType() == ValueType.DECIMAL; break;
             case BOOLEAN: comparable = right.scalar().getType() == ValueType.BOOLEAN; break;

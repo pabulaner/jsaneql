@@ -2,7 +2,7 @@ package de.pabulaner.jsaneql.schema;
 
 public enum ValueType {
 
-    STRING,
+    TEXT,
     INTEGER,
     DECIMAL,
     BOOLEAN,

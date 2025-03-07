@@ -16,10 +16,10 @@ public class TestDatabase implements Database {
                 new TestTableColumn("id", ValueType.INTEGER),
                 new TestTableColumn("created_at", ValueType.DATE),
                 new TestTableColumn("deleted", ValueType.BOOLEAN),
-                new TestTableColumn("username", ValueType.STRING),
-                new TestTableColumn("password", ValueType.STRING),
+                new TestTableColumn("username", ValueType.TEXT),
+                new TestTableColumn("password", ValueType.TEXT),
                 new TestTableColumn("age", ValueType.INTEGER),
-                new TestTableColumn("country", ValueType.STRING)
+                new TestTableColumn("country", ValueType.TEXT)
         ))
                 .addRow("1", "2017-05-02", "false", "paul", "1234", "16", "germany")
                 .addRow("2", "2018-07-06", "false", "peter", "what", "32", "germany")
@@ -34,7 +34,7 @@ public class TestDatabase implements Database {
                 new TestTableColumn("post_id", ValueType.INTEGER),
                 new TestTableColumn("created_at", ValueType.DATE),
                 new TestTableColumn("deleted", ValueType.BOOLEAN),
-                new TestTableColumn("type", ValueType.STRING),
+                new TestTableColumn("type", ValueType.TEXT),
                 new TestTableColumn("public", ValueType.BOOLEAN)
         ))
                 .addRow("1", "1", "1", "2017-05-02", "false", "video", "true")
@@ -46,8 +46,8 @@ public class TestDatabase implements Database {
 
         tables.add(new TestTable("videos", Arrays.asList(
                 new TestTableColumn("id", ValueType.INTEGER),
-                new TestTableColumn("title", ValueType.STRING),
-                new TestTableColumn("content", ValueType.STRING)
+                new TestTableColumn("title", ValueType.TEXT),
+                new TestTableColumn("content", ValueType.TEXT)
         ))
                 .addRow("1", "Hello World!", "a0efjkcj3a403ieal3403")
                 .addRow("2", "Chuck Norris is behieafdjfaje!", "a0efjkcj3a403ieal3403")
@@ -56,7 +56,7 @@ public class TestDatabase implements Database {
 
         tables.add(new TestTable("comments", Arrays.asList(
                 new TestTableColumn("id", ValueType.INTEGER),
-                new TestTableColumn("text", ValueType.STRING)
+                new TestTableColumn("text", ValueType.TEXT)
         ))
                 .addRow("1", "Nice Video!")
                 .addRow("2", "Awesome...")

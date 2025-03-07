@@ -24,7 +24,7 @@ class ScanOperatorTest {
     @Test
     public void testScanOperator() throws CompileException {
         Database db = new TestDatabase();
-        Result tree = new Compiler(db).compile("accounts");
+        Result tree = new Compiler(db).compile("accounts.orderby({username.desc()})");
         Map<IU, Value> row;
 
         for (Column column : tree.binding().getColumns()) {

@@ -20,7 +20,7 @@ public class ConstExpression implements Expression {
     @Override
     public Value getValue(Map<IU, Value> row) {
         switch (type) {
-            case STRING: return Value.ofString(value);
+            case TEXT: return Value.ofString(value);
             case INTEGER: return Value.ofInteger(Long.parseLong(value));
             case DECIMAL: return Value.ofDecimal(Double.parseDouble(value));
             case BOOLEAN: return Value.ofBoolean(Boolean.parseBoolean(value));

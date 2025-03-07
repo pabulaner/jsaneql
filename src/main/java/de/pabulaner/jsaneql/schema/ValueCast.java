@@ -1,9 +1,7 @@
 package de.pabulaner.jsaneql.schema;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.Period;
-import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
 
@@ -14,7 +12,7 @@ public class ValueCast {
 
     public static Value cast(Value value, ValueType type) {
         switch (type) {
-            case STRING: return Value.ofString(castToString(value));
+            case TEXT: return Value.ofString(castToString(value));
             case INTEGER: return Value.ofInteger(castToInteger(value));
             case DECIMAL: return Value.ofDecimal(castToDecimal(value));
             case BOOLEAN: return Value.ofBoolean(castToBoolean(value));
@@ -33,7 +31,7 @@ public class ValueCast {
 
     private static Long castToInteger(Value value) {
         switch (value.getType()) {
-            case STRING: return Long.parseLong(value.getString());
+            case TEXT: return Long.parseLong(value.getString());
             case INTEGER:
             case DECIMAL: return value.getInteger();
             case BOOLEAN: return value.getBoolean() ? 1L : 0L;
@@ -44,7 +42,7 @@ public class ValueCast {
 
     private static Double castToDecimal(Value value) {
         switch (value.getType()) {
-            case STRING: return Double.valueOf(value.getString());
+            case TEXT: return Double.valueOf(value.getString());
             case INTEGER:
             case DECIMAL: value.getDecimal();
             case BOOLEAN: return value.getBoolean() ? 1.0 : 0.0;
@@ -55,7 +53,7 @@ public class ValueCast {
 
     private static Boolean castToBoolean(Value value) {
         switch (value.getType()) {
-            case STRING:
+            case TEXT:
                 if (value.getString().equals("false") || value.getString().equals("0")) {
                     return false;
                 }
@@ -75,7 +73,7 @@ public class ValueCast {
 
     private static LocalDateTime castToDate(Value value) {
         switch (value.getType()) {
-            case STRING: return LocalDateTime.parse(value.getString(), new DateTimeFormatterBuilder()
+            case TEXT: return LocalDateTime.parse(value.getString(), new DateTimeFormatterBuilder()
                     .appendPattern("yyyy-MM-dd[ HH:mm]")
                     .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
                     .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
@@ -88,7 +86,7 @@ public class ValueCast {
 
     private static Period castToInterval(Value value) {
         switch (value.getType()) {
-            case STRING:
+            case TEXT:
                 String[] parts = value.getString().split(" ");
 
                 if (parts.length == 2) {
