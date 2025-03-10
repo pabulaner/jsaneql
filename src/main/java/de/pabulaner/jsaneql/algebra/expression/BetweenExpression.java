@@ -1,10 +1,7 @@
 package de.pabulaner.jsaneql.algebra.expression;
 
-import de.pabulaner.jsaneql.algebra.IU;
-import de.pabulaner.jsaneql.schema.Value;
+import de.pabulaner.jsaneql.compile.SQLWriter;
 import de.pabulaner.jsaneql.schema.ValueType;
-
-import java.util.Map;
 
 public class BetweenExpression implements Expression {
 
@@ -21,12 +18,12 @@ public class BetweenExpression implements Expression {
     }
 
     @Override
-    public Value getValue(Map<IU, Value> row) {
-        Value baseValue = base.getValue(row);
-        Value lowerValue = lower.getValue(row);
-        Value upperValue = upper.getValue(row);
-
-        return Value.ofBoolean(baseValue.compare(lowerValue) >= 0 && baseValue.compare(upperValue) <= 0);
+    public void generate(SQLWriter out) {
+        base.generate(out);
+        out.write(" BETWEEN ");
+        lower.generate(out);
+        out.write(" AND ");
+        upper.generate(out);
     }
 
     @Override

@@ -1,14 +1,14 @@
 package de.pabulaner.jsaneql.semana.function;
 
-import de.pabulaner.jsaneql.semana.result.Result;
+import de.pabulaner.jsaneql.semana.result.ExpressionResult;
 
 public class ExpressionArg {
 
     private final String name;
 
-    private final Result result;
+    private final ExpressionResult result;
 
-    public ExpressionArg(String name, Result result) {
+    public ExpressionArg(String name, ExpressionResult result) {
         this.name = name;
         this.result = result;
     }
@@ -17,7 +17,7 @@ public class ExpressionArg {
         return name;
     }
 
-    public Result getResult() {
+    public ExpressionResult getResult() {
         return result;
     }
 }

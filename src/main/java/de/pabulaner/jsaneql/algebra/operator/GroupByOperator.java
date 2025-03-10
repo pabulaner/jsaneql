@@ -2,13 +2,11 @@ package de.pabulaner.jsaneql.algebra.operator;
 
 import de.pabulaner.jsaneql.algebra.IU;
 import de.pabulaner.jsaneql.algebra.expression.Expression;
+import de.pabulaner.jsaneql.compile.SQLWriter;
 import de.pabulaner.jsaneql.schema.Value;
 
-import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 
 public class GroupByOperator implements Operator {
 
@@ -58,59 +56,73 @@ public class GroupByOperator implements Operator {
 
     private final List<Aggregation> aggregates;
 
-    private Map<Value[], Value[]> result;
-
     public GroupByOperator(Operator input, List<MapOperator.Entry> groupBy, List<Aggregation> aggregates) {
         this.input = input;
         this.groupBy = groupBy;
         this.aggregates = aggregates;
-        this.result = null;
-
-        for (int i = 0; i < aggregates.size(); i++) {
-            Aggregation aggregation = aggregates.get(i);
-
-            switch (aggregation.getOperation()) {
-                case AVG: aggregates.add(i + 1, new Aggregation(null, null, Operation.COUNT)); break;
-                case AVG_DISTINCT: aggregates.add(i + 1, new Aggregation(null, null, Operation.COUNT_DISTINCT)); break;
-            }
-        }
     }
 
     @Override
-    public Map<IU, Value> next() {
-        if (result == null) {
-            result = new HashMap<>();
-            Map<IU, Value> row;
+    public void generate(SQLWriter out) {
+        out.write("(SELECT ");
 
-            while ((row = input.next()) != null) {
-                Value[] key = new Value[groupBy.size()];
-                Value[] value = new Value[aggregates.size()];
+        boolean first = true;
+        for (MapOperator.Entry groupBy : groupBy) {
+            if (first) {
+                first = false;
+            } else {
+                out.write(", ");
+            }
 
-                for (int i = 0; i < groupBy.size(); i++) {
-                    key[i] = groupBy.get(i).getValue().getValue(row);
+            groupBy.getValue().generate(out);
+            out.write(" AS ");
+            out.writeIU(groupBy.getIU());
+        }
+
+        for (Aggregation aggregation : aggregates) {
+            if (first) {
+                first = false;
+            } else {
+                out.write(", ");
+            }
+
+            switch (aggregation.getOperation()) {
+                case COUNT_STAR: out.write("COUNT(*)"); break;
+                case COUNT: out.write("COUNT("); break;
+                case COUNT_DISTINCT: out.write("COUNT(DISTINCT "); break;
+                case SUM: out.write("SUM("); break;
+                case SUM_DISTINCT: out.write("SUM(DISTINCT "); break;
+                case MIN: out.write("MIN("); break;
+                case MAX: out.write("MAX("); break;
+                case AVG: out.write("AVG("); break;
+                case AVG_DISTINCT: out.write("AVG(DISTINCT "); break;
+            }
+
+            if (aggregation.getOperation() != Operation.COUNT_STAR) {
+                aggregation.getValue().generate(out);
+                out.write(")");
+            }
+
+            out.write(" AS ");
+            out.writeIU(aggregation.getIU());
+        }
+
+        out.write(" FROM ");
+        input.generate(out);
+        out.write("s GROUP BY ");
+
+        if (groupBy.isEmpty()) {
+            out.write("true");
+        } else {
+            for (int i = 0; i < groupBy.size(); i++) {
+                if (i != 0) {
+                    out.write(", ");
                 }
 
-                for (int i = 0; i < aggregates.size(); i++) {
-                    Aggregation aggregation = aggregates.get(i);
-
-                    switch (aggregation.getOperation()) {
-                        case COUNT_STAR: value[i] = Value.ofInteger(1L); break;
-                        case COUNT: break;
-                        case COUNT_DISTINCT: break;
-                        case SUM: value[i] = aggregation.getValue().getValue(row); break;
-                        case SUM_DISTINCT: break;
-                        case MIN: break;
-                        case MAX:
-                            break;
-                        case AVG:
-                            break;
-                        case AVG_DISTINCT:
-                            break;
-                    }
-                }
+                out.write(String.valueOf(i + 1));
             }
         }
 
-        return null;
+        out.write(")");
     }
 }

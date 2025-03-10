@@ -1,11 +1,7 @@
 package de.pabulaner.jsaneql.algebra.operator;
 
-import de.pabulaner.jsaneql.algebra.IU;
 import de.pabulaner.jsaneql.algebra.expression.Expression;
-import de.pabulaner.jsaneql.schema.TableRow;
-import de.pabulaner.jsaneql.schema.Value;
-
-import java.util.Map;
+import de.pabulaner.jsaneql.compile.SQLWriter;
 
 public class FilterOperator implements Operator {
 
@@ -19,15 +15,11 @@ public class FilterOperator implements Operator {
     }
 
     @Override
-    public Map<IU, Value> next() {
-        Map<IU, Value> row;
-
-        while ((row = input.next()) != null) {
-            if (condition.getValue(row).getBoolean()) {
-                return row;
-            }
-        }
-
-        return null;
+    public void generate(SQLWriter out) {
+        out.write("(SELECT * FROM ");
+        input.generate(out);
+        out.write(" s WHERE ");
+        condition.generate(out);
+        out.write(")");
     }
 }

@@ -1,7 +1,5 @@
 package de.pabulaner.jsaneql.parser.ast;
 
-import de.pabulaner.jsaneql.util.StringView;
-
 public abstract class Node {
 
     /**

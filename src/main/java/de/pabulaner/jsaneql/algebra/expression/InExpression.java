@@ -1,11 +1,9 @@
 package de.pabulaner.jsaneql.algebra.expression;
 
-import de.pabulaner.jsaneql.algebra.IU;
-import de.pabulaner.jsaneql.schema.Value;
+import de.pabulaner.jsaneql.compile.SQLWriter;
 import de.pabulaner.jsaneql.schema.ValueType;
 
 import java.util.List;
-import java.util.Map;
 
 public class InExpression implements Expression {
 
@@ -19,15 +17,22 @@ public class InExpression implements Expression {
     }
 
     @Override
-    public Value getValue(Map<IU, Value> row) {
-        boolean result = false;
-        Value probeValue = probe.getValue(row);
+    public void generate(SQLWriter out) {
+        probe.generateOperand(out);
+        out.write(" IN (");
 
+        boolean first = true;
         for (Expression value : values) {
-            result |= probeValue.compare(value.getValue(row)) == 0;
+            if (first) {
+                first = false;
+            } else {
+                out.write(", ");
+            }
+
+            value.generate(out);
         }
 
-        return Value.ofBoolean(result);
+        out.write(")");
     }
 
     @Override

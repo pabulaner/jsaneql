@@ -42,7 +42,7 @@ public class Value {
     }
 
     public static Value ofNull() {
-        return new Value(ValueType.NULL, null);
+        return new Value(ValueType.UNKNOWN, null);
     }
 
     public Value add(Value other) {
@@ -160,7 +160,7 @@ public class Value {
             case BOOLEAN: return (getBoolean() ? 1 : 0) - (other.getBoolean() ? 1 : 0);
             case DATE: return getDate().compareTo(other.getDate());
             case INTERVAL: return LocalDate.MIN.plus(getInterval()).compareTo(LocalDate.MIN.plus(other.getInterval()));
-            case NULL: return 0;
+            case UNKNOWN: return 0;
         }
 
         throw new IllegalStateException();

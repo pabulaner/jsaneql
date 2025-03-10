@@ -1,15 +1,9 @@
 package de.pabulaner.jsaneql.algebra.operator;
 
-import de.pabulaner.jsaneql.algebra.IU;
 import de.pabulaner.jsaneql.algebra.expression.Expression;
-import de.pabulaner.jsaneql.schema.Value;
+import de.pabulaner.jsaneql.compile.SQLWriter;
 
-import java.util.Comparator;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.stream.Collectors;
 
 public class OrderByOperator implements Operator {
 
@@ -33,47 +27,38 @@ public class OrderByOperator implements Operator {
 
     private final long offset;
 
-    private Queue<Map<IU, Value>> result;
-
     public OrderByOperator(Operator input, List<Entry> order, long limit, long offset) {
         this.input = input;
         this.order = order;
         this.limit = limit;
         this.offset = offset;
-        this.result = null;
     }
 
     @Override
-    public Map<IU, Value> next() {
-        if (result == null) {
-            result = new LinkedList<>();
-            Map<IU, Value> row;
+    public void generate(SQLWriter out) {
+        out.write("(SELECT * FROM ");
+        input.generate(out);
+        out.write(" s");
 
-            while ((row = input.next()) != null) {
-                result.add(row);
+        if (!order.isEmpty()) {
+            out.write(" ORDER BY ");
+
+            boolean first = true;
+            for (Entry order : order) {
+                if (first) {
+                    first = false;
+                } else {
+                    out.write(", ");
+                }
+
+                order.value.generate(out);
+
+                if (order.descending) {
+                    out.write(" DESC");
+                }
             }
-
-            result = result.stream()
-                    .sorted(this::compare)
-                    .skip(offset)
-                    .limit(limit)
-                    .collect(Collectors.toCollection(LinkedList::new));
         }
 
-        return result.poll();
-    }
-
-    private int compare(Map<IU, Value> first, Map<IU, Value> second) {
-        for (Entry entry : order) {
-            Value firstValue = entry.value.getValue(first);
-            Value secondValue = entry.value.getValue(second);
-
-            long value = firstValue.compare(secondValue);
-
-            if (value < 0) return entry.descending ? 1 : -1;
-            if (value > 0) return entry.descending ? -1 : 1;
-        }
-
-        return 0;
+        out.write(" LIMIT " + limit + " OFFSET " + offset + ")");
     }
 }

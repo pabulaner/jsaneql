@@ -1,10 +1,7 @@
 package de.pabulaner.jsaneql.algebra.expression;
 
-import de.pabulaner.jsaneql.algebra.IU;
-import de.pabulaner.jsaneql.schema.Value;
+import de.pabulaner.jsaneql.compile.SQLWriter;
 import de.pabulaner.jsaneql.schema.ValueType;
-
-import java.util.Map;
 
 public class BinaryExpression implements Expression {
 
@@ -23,6 +20,7 @@ public class BinaryExpression implements Expression {
         LESS_EQUALS,
         GREATER_EQUALS,
         LIKE,
+        CONCAT,
         AND,
         OR,
     }
@@ -43,29 +41,29 @@ public class BinaryExpression implements Expression {
     }
 
     @Override
-    public Value getValue(Map<IU, Value> row) {
-        Value leftValue = left.getValue(row);
-        Value rightValue = right.getValue(row);
-        
+    public void generate(SQLWriter out) {
+        left.generate(out);
+
         switch (operation) {
-            case ADD: return leftValue.add(rightValue);
-            case SUB: return leftValue.sub(rightValue);
-            case MUL: return leftValue.mul(rightValue);
-            case DIV: return leftValue.div(rightValue);
-            case MOD: return leftValue.mod(rightValue);
-            case POW: return leftValue.pow(rightValue);
-            case EQUALS: return Value.ofBoolean(leftValue.compare(rightValue) == 0);
-            case NOT_EQUALS: return Value.ofBoolean(leftValue.compare(rightValue) != 0);
-            case LESS: return Value.ofBoolean(leftValue.compare(rightValue) < 0);
-            case GREATER: return Value.ofBoolean(leftValue.compare(rightValue) > 0);
-            case LESS_EQUALS: return Value.ofBoolean(leftValue.compare(rightValue) <= 0);
-            case GREATER_EQUALS: return Value.ofBoolean(leftValue.compare(rightValue) >= 0);
-            case LIKE: return leftValue.like(rightValue);
-            case AND: return Value.ofBoolean(leftValue.getBoolean() && rightValue.getBoolean());
-            case OR: return Value.ofBoolean(leftValue.getBoolean() || rightValue.getBoolean());
+            case ADD: out.write(" + "); break;
+            case SUB: out.write(" - "); break;
+            case MUL: out.write(" * "); break;
+            case DIV: out.write(" / "); break;
+            case MOD: out.write(" % "); break;
+            case POW: out.write(" ^ "); break;
+            case EQUALS: out.write(" = "); break;
+            case NOT_EQUALS: out.write(" <> "); break;
+            case LESS: out.write(" < "); break;
+            case GREATER: out.write(" > "); break;
+            case LESS_EQUALS: out.write(" <= "); break;
+            case GREATER_EQUALS: out.write(" >= "); break;
+            case LIKE: out.write(" LIKE "); break;
+            case CONCAT: out.write(" || "); break;
+            case AND: out.write(" AND "); break;
+            case OR: out.write(" OR "); break;
         }
 
-        return null;
+        right.generate(out);
     }
 
     @Override

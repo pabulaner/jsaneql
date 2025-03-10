@@ -1,5 +1,6 @@
 package de.pabulaner.jsaneql.semana.binding;
 
+import de.pabulaner.jsaneql.algebra.Column;
 import de.pabulaner.jsaneql.algebra.IU;
 
 import java.util.ArrayList;

@@ -1,15 +1,7 @@
 package de.pabulaner.jsaneql.algebra.expression;
 
-import de.pabulaner.jsaneql.algebra.IU;
-import de.pabulaner.jsaneql.schema.Value;
-import de.pabulaner.jsaneql.schema.ValueCast;
+import de.pabulaner.jsaneql.compile.SQLWriter;
 import de.pabulaner.jsaneql.schema.ValueType;
-
-import javax.swing.text.DateFormatter;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.Date;
-import java.util.Map;
 
 public class CastExpression implements Expression {
 
@@ -23,8 +15,12 @@ public class CastExpression implements Expression {
     }
 
     @Override
-    public Value getValue(Map<IU, Value> row) {
-        return ValueCast.cast(value.getValue(row), type);
+    public void generate(SQLWriter out) {
+        out.write("CAST(");
+        value.generate(out);
+        out.write(" AS ");
+        out.writeType(type);
+        out.write(")");
     }
 
     @Override

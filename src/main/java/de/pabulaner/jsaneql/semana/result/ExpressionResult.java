@@ -4,25 +4,25 @@ import de.pabulaner.jsaneql.algebra.expression.Expression;
 import de.pabulaner.jsaneql.algebra.operator.Operator;
 import de.pabulaner.jsaneql.semana.binding.Binding;
 
-public class Result {
+public class ExpressionResult {
 
     private final ScalarInfo scalar;
 
     private final TableInfo table;
 
-    public Result(Expression expression) {
+    public ExpressionResult(Expression expression) {
         this(expression, new OrderingInfo(false));
     }
 
-    public Result(Expression expression, OrderingInfo orderingInfo) {
+    public ExpressionResult(Expression expression, OrderingInfo orderingInfo) {
         this(new ScalarInfo(expression, orderingInfo), null);
     }
 
-    public Result(Operator operator, Binding binding) {
+    public ExpressionResult(Operator operator, Binding binding) {
         this(null, new TableInfo(operator, binding));
     }
 
-    private Result(ScalarInfo scalar, TableInfo table) {
+    private ExpressionResult(ScalarInfo scalar, TableInfo table) {
         this.scalar = scalar;
         this.table = table;
     }
@@ -35,16 +35,18 @@ public class Result {
         return table != null;
     }
 
-    public Expression scalar() {
-        return scalar.getExpression();
+    @SuppressWarnings("unchecked")
+    public <TExpression extends Expression> TExpression scalar() {
+        return (TExpression) scalar.getExpression();
     }
 
     public OrderingInfo ordering() {
         return scalar.getOrdering();
     }
 
-    public Operator table() {
-        return table.getOperator();
+    @SuppressWarnings("unchecked")
+    public <TOperator extends Operator> TOperator table() {
+        return (TOperator) table.getOperator();
     }
 
     public Binding binding() {

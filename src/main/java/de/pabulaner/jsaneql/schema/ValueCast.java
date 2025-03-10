@@ -24,7 +24,7 @@ public class ValueCast {
     }
 
     private static String castToString(Value value) {
-        return value.getType() != ValueType.NULL
+        return value.getType() != ValueType.UNKNOWN
                 ? value.getValue().toString()
                 : null;
     }

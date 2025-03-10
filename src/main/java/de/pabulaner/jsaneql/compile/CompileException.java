@@ -1,4 +1,4 @@
-package de.pabulaner.jsaneql;
+package de.pabulaner.jsaneql.compile;
 
 public class CompileException extends Exception {
 

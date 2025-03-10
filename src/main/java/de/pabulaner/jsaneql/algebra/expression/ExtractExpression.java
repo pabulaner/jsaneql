@@ -1,14 +1,7 @@
 package de.pabulaner.jsaneql.algebra.expression;
 
-import de.pabulaner.jsaneql.algebra.IU;
-import de.pabulaner.jsaneql.schema.Value;
+import de.pabulaner.jsaneql.compile.SQLWriter;
 import de.pabulaner.jsaneql.schema.ValueType;
-
-import java.time.LocalDateTime;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.Map;
 
 public class ExtractExpression implements Expression {
 
@@ -29,18 +22,18 @@ public class ExtractExpression implements Expression {
     }
 
     @Override
-    public Value getValue(Map<IU, Value> row) {
-        Value dateValue = input.getValue(row);
-        LocalDateTime date = dateValue.getDate();
-        long value = 0;
+    public void generate(SQLWriter out) {
+        out.write("EXTRACT(");
 
         switch (part) {
-            case YEAR: value = date.getYear(); break;
-            case MONTH: value = date.getMonthValue(); break;
-            case DAY: value = date.getDayOfMonth(); break;
+            case YEAR: out.write("YEAR"); break;
+            case MONTH: out.write("MONTH"); break;
+            case DAY: out.write("DAY"); break;
         }
 
-        return Value.ofInteger(value);
+        out.write(" FROM ");
+        input.generateOperand(out);
+        out.write(")");
     }
 
     @Override

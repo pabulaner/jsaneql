@@ -1,23 +1,29 @@
 package de.pabulaner.jsaneql.semana;
 
+import de.pabulaner.jsaneql.algebra.Column;
 import de.pabulaner.jsaneql.algebra.IU;
+import de.pabulaner.jsaneql.algebra.expression.ExpressionProvider;
+import de.pabulaner.jsaneql.algebra.operator.OperatorProvider;
 import de.pabulaner.jsaneql.algebra.expression.BetweenExpression;
 import de.pabulaner.jsaneql.algebra.expression.BinaryExpression;
 import de.pabulaner.jsaneql.algebra.expression.CastExpression;
+import de.pabulaner.jsaneql.algebra.expression.ValueExpression;
 import de.pabulaner.jsaneql.algebra.expression.EmptyExpression;
 import de.pabulaner.jsaneql.algebra.expression.Expression;
 import de.pabulaner.jsaneql.algebra.expression.ExtractExpression;
 import de.pabulaner.jsaneql.algebra.expression.InExpression;
+import de.pabulaner.jsaneql.algebra.expression.RefExpression;
 import de.pabulaner.jsaneql.algebra.expression.SubstrExpression;
+import de.pabulaner.jsaneql.algebra.expression.UnaryExpression;
 import de.pabulaner.jsaneql.algebra.operator.GroupByOperator;
 import de.pabulaner.jsaneql.algebra.operator.JoinOperator;
 import de.pabulaner.jsaneql.algebra.operator.MapOperator;
 import de.pabulaner.jsaneql.algebra.operator.Operator;
 import de.pabulaner.jsaneql.algebra.operator.OrderByOperator;
 import de.pabulaner.jsaneql.parser.ast.AccessNode;
+import de.pabulaner.jsaneql.parser.ast.ArgNode;
 import de.pabulaner.jsaneql.parser.ast.BinaryNode;
 import de.pabulaner.jsaneql.parser.ast.CallNode;
-import de.pabulaner.jsaneql.parser.ast.ArgNode;
 import de.pabulaner.jsaneql.parser.ast.CastNode;
 import de.pabulaner.jsaneql.parser.ast.ListNode;
 import de.pabulaner.jsaneql.parser.ast.Node;
@@ -28,20 +34,15 @@ import de.pabulaner.jsaneql.schema.Database;
 import de.pabulaner.jsaneql.schema.Table;
 import de.pabulaner.jsaneql.schema.TableColumn;
 import de.pabulaner.jsaneql.schema.ValueType;
-import de.pabulaner.jsaneql.algebra.expression.ConstExpression;
-import de.pabulaner.jsaneql.algebra.expression.RefExpression;
-import de.pabulaner.jsaneql.algebra.expression.UnaryExpression;
+import de.pabulaner.jsaneql.semana.binding.Binding;
 import de.pabulaner.jsaneql.semana.binding.GroupByScope;
 import de.pabulaner.jsaneql.semana.binding.Scope;
 import de.pabulaner.jsaneql.semana.function.ExpressionArg;
 import de.pabulaner.jsaneql.semana.function.Function;
 import de.pabulaner.jsaneql.semana.function.FunctionArg;
 import de.pabulaner.jsaneql.semana.function.Functions;
-import de.pabulaner.jsaneql.algebra.operator.FilterOperator;
-import de.pabulaner.jsaneql.algebra.operator.ScanOperator;
+import de.pabulaner.jsaneql.semana.result.ExpressionResult;
 import de.pabulaner.jsaneql.semana.result.OrderingInfo;
-import de.pabulaner.jsaneql.semana.result.Result;
-import de.pabulaner.jsaneql.semana.binding.Binding;
 import de.pabulaner.jsaneql.tokenizer.Token;
 
 import java.util.ArrayList;
@@ -49,22 +50,28 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
-public class SemanticAnalyzer {
+public class SemanticAnalyzer<TOperator extends Operator, TExpression extends Expression> {
+
+    private final OperatorProvider<TOperator, TExpression> operatorProvider;
+
+    private final ExpressionProvider<TExpression> expressionProvider;
 
     private final Database db;
 
     private final Functions functions;
 
-    public SemanticAnalyzer(Database db) {
+    public SemanticAnalyzer(OperatorProvider<TOperator, TExpression> operatorProvider, ExpressionProvider<TExpression> expressionProvider, Database db) {
+        this.operatorProvider = operatorProvider;
+        this.expressionProvider = expressionProvider;
         this.db = db;
         this.functions = new Functions();
     }
 
-    public Result parse(QueryNode ast) {
+    public ExpressionResult parse(QueryNode ast) {
         return parseExpression(new Binding(), ast.getBody());
     }
 
-    private Result parseExpression(Binding binding, Node ast) {
+    private ExpressionResult parseExpression(Binding binding, Node ast) {
         switch (ast.getType()) {
             case TOKEN: return parseToken(binding, (TokenNode) ast);
             case ACCESS: return parseAccess(binding, (AccessNode) ast);
@@ -76,7 +83,7 @@ public class SemanticAnalyzer {
         }
     }
 
-    private Result parseToken(Binding binding, TokenNode ast) {
+    private ExpressionResult parseToken(Binding binding, TokenNode ast) {
         Token token = ast.getToken();
 
         if (token.getKind() == Token.Kind.IDENT) {
@@ -89,7 +96,7 @@ public class SemanticAnalyzer {
                     reportError("'" + name + "' is ambiguous");
                 }
 
-                return new Result(new RefExpression(iu));
+                return new ExpressionResult(expressionProvider.ref(iu));
             }
 
             // Is it a scan?
@@ -100,16 +107,16 @@ public class SemanticAnalyzer {
             }
 
             Scope scope = binding.addScope(name);
-            List<IU> columns = new ArrayList<>();
+            List<Column> columns = new ArrayList<>();
 
             for (TableColumn column : table.getColumns()) {
                 iu = new IU(column.getType());
 
                 binding.addBinding(scope, column.getName(), iu);
-                columns.add(iu);
+                columns.add(new Column(column.getName(), iu));
             }
 
-            return new Result(new ScanOperator(table, columns), binding);
+            return new ExpressionResult(operatorProvider.scan(name, columns), binding);
         } else {
             ValueType type;
 
@@ -118,15 +125,15 @@ public class SemanticAnalyzer {
                 case INTEGER: type = ValueType.INTEGER; break;
                 case DECIMAL: type = ValueType.DECIMAL; break;
                 case BOOLEAN: type = ValueType.BOOLEAN; break;
-                case NULL: type = ValueType.NULL; break;
+                case NULL: type = ValueType.UNKNOWN; break;
                 default: throw new InvalidAstException();
             }
 
-            return new Result(new ConstExpression(type, token.getValue().toString()));
+            return new ExpressionResult(expressionProvider.value(token.getValue().toString(), type));
         }
     }
 
-    private Result parseAccess(Binding binding, AccessNode ast) {
+    private ExpressionResult parseAccess(Binding binding, AccessNode ast) {
         String base = extractValue(ast.getBase());
         String name = extractValue(ast.getPart());
 
@@ -144,12 +151,12 @@ public class SemanticAnalyzer {
             reportError("'" + base + "' is ambiguous");
         }
 
-        return new Result(new RefExpression(iu));
+        return new ExpressionResult(expressionProvider.ref(iu));
     }
 
-    private Result parseCall(Binding binding, CallNode ast) {
+    private ExpressionResult parseCall(Binding binding, CallNode ast) {
         // Recognize call and lookup function signature
-        Result base = new Result(null);
+        ExpressionResult base = new ExpressionResult(null);
         String name;
         Function function;
 
@@ -243,11 +250,11 @@ public class SemanticAnalyzer {
             case SUBSTR: return parseSubstr(binding, base, args);
             case EXTRACT: return parseExtract(binding, base, args);
             case FILTER: return parseFilter(base, args);
+            case MAP: return parseMap(base, args, false);
+            case PROJECT: return parseMap(base, args, true);
             case JOIN: return parseJoin(binding, base, args);
             case GROUP_BY: return parseGroupBy(base, args);
             case ORDER_BY: return parseOrderBy(base, args);
-            case MAP: return parseMap(base, args, false);
-            case PROJECT: return parseMap(base, args, true);
             case AS: return parseAs(base, args);
             case COUNT: return parseAggregate(binding, args.get(0) != null ? GroupByOperator.Operation.COUNT : GroupByOperator.Operation.COUNT_STAR, args.get(0) != null ? GroupByOperator.Operation.COUNT_DISTINCT : GroupByOperator.Operation.COUNT_STAR, name, args);
             case SUM: return parseAggregate(binding, GroupByOperator.Operation.SUM, GroupByOperator.Operation.SUM_DISTINCT, name, args);
@@ -260,47 +267,47 @@ public class SemanticAnalyzer {
         return null;
     }
 
-    private Result parseOrdering(Result base, boolean descending) {
+    private ExpressionResult parseOrdering(ExpressionResult base, boolean descending) {
         base.ordering().setDescending(descending);
         return base;
     }
 
-    private Result parseBetween(Binding binding, Result base, List<ArgNode> args) {
-        Result lower = scalarArgument("between", "lower", binding, args.get(0));
-        Result upper = scalarArgument("between", "upper", binding, args.get(1));
+    private ExpressionResult parseBetween(Binding binding, ExpressionResult base, List<ArgNode> args) {
+        ExpressionResult lower = scalarArgument("between", "lower", binding, args.get(0));
+        ExpressionResult upper = scalarArgument("between", "upper", binding, args.get(1));
 
         enforceComparable(base, lower);
         enforceComparable(base, upper);
 
-        return new Result(new BetweenExpression(base.scalar(), lower.scalar(), upper.scalar()));
+        return new ExpressionResult(expressionProvider.between(base.scalar(), lower.scalar(), upper.scalar()));
     }
 
-    private Result parseIn(Binding binding, Result base, List<ArgNode> args) {
+    private ExpressionResult parseIn(Binding binding, ExpressionResult base, List<ArgNode> args) {
         List<ExpressionArg> values = listArgument(binding, args.get(0));
-        List<Expression> expressions = new ArrayList<>();
+        List<TExpression> expressions = new ArrayList<>();
 
         for (ExpressionArg value : values) {
             enforceComparable(base, value.getResult());
             expressions.add(value.getResult().scalar());
         }
 
-        return new Result(new InExpression(base.scalar(), expressions));
+        return new ExpressionResult(expressionProvider.in(base.scalar(), expressions));
     }
 
-    private Result parseLike(Binding binding, Result base, List<ArgNode> args) {
-        Result pattern = scalarArgument("like", "pattern", binding, args.get(0));
+    private ExpressionResult parseLike(Binding binding, ExpressionResult base, List<ArgNode> args) {
+        ExpressionResult pattern = scalarArgument("like", "pattern", binding, args.get(0));
 
         if (base.scalar().getType() != ValueType.TEXT || pattern.scalar().getType() != ValueType.TEXT) {
             reportError("'like' requires string argument");
         }
 
-        return new Result(new BinaryExpression(ValueType.BOOLEAN, BinaryExpression.Operation.LIKE, base.scalar(), pattern.scalar()));
+        return new ExpressionResult(expressionProvider.binary(base.scalar(), pattern.scalar(), BinaryExpression.Operation.LIKE, ValueType.BOOLEAN));
     }
 
-    private Result parseSubstr(Binding binding, Result base, List<ArgNode> args) {
+    private ExpressionResult parseSubstr(Binding binding, ExpressionResult base, List<ArgNode> args) {
         String message = "'substr' requires numeric arguments";
-        Expression from = null;
-        Expression length = null;
+        TExpression from = null;
+        TExpression length = null;
 
         if (args.get(0) == null && args.get(1) == null) {
             reportError(message);
@@ -322,10 +329,10 @@ public class SemanticAnalyzer {
             }
         }
 
-        return new Result(new SubstrExpression(base.scalar(), from, length));
+        return new ExpressionResult(expressionProvider.substr(base.scalar(), from, length));
     }
 
-    private Result parseExtract(Binding binding, Result base, List<ArgNode> args) {
+    private ExpressionResult parseExtract(Binding binding, ExpressionResult base, List<ArgNode> args) {
         String name = symbolArgument("extract", "part", args.get(0));
         ExtractExpression.Part part = null;
 
@@ -336,20 +343,48 @@ public class SemanticAnalyzer {
             default: reportError("unknown date part '" + name + "'");
         }
 
-        return new Result(new ExtractExpression(base.scalar(), part));
+        return new ExpressionResult(expressionProvider.extract(base.scalar(), part));
     }
 
-    private Result parseFilter(Result base, List<ArgNode> args) {
-        Result condition = scalarArgument("filter", "condition", base.binding(), args.get(0));
+    private ExpressionResult parseFilter(ExpressionResult base, List<ArgNode> args) {
+        ExpressionResult condition = scalarArgument("filter", "condition", base.binding(), args.get(0));
 
         if (condition.scalar().getType() != ValueType.BOOLEAN) {
             reportError("'filter' requires a boolean condition");
         }
 
-        return new Result(new FilterOperator(base.table(), condition.scalar()), base.binding());
+        return new ExpressionResult(operatorProvider.filter(base.table(), condition.scalar()), base.binding());
     }
 
-    private Result parseJoin(Binding binding, Result base, List<ArgNode> args) {
+    private ExpressionResult parseMap(ExpressionResult base, List<ArgNode> args, boolean project) {
+        String name = project ? "project" : "map";
+        List<ExpressionArg> list = listArgument(base.binding(), args.get(0));
+        List<MapOperator.Entry> entries = new ArrayList<>();
+        Binding resultBinding = project ? new Binding() : base.binding();
+
+        // Compute the expressions
+        for (ExpressionArg arg : list) {
+            if (!arg.getResult().isScalar()) {
+                reportError(name + " requires scalar values");
+            }
+
+            ValueType type = arg.getResult().scalar().getType();
+            entries.add(new MapOperator.Entry(new IU(type), arg.getResult().scalar()));
+
+            // Make expressions visible
+            String argName = arg.getName();
+
+            if (argName == null) {
+                argName = String.valueOf(resultBinding.getColumnLookup().size() + 1);
+            }
+
+            resultBinding.addBinding(argName, entries.get(entries.size() - 1).getIU());
+        }
+
+        return new ExpressionResult(operatorProvider.map(base.table(), entries), resultBinding);
+    }
+
+    private ExpressionResult parseJoin(Binding binding, ExpressionResult base, List<ArgNode> args) {
         JoinOperator.Type type = JoinOperator.Type.INNER;
         boolean leftOnly = false;
         boolean rightOnly = false;
@@ -375,11 +410,11 @@ public class SemanticAnalyzer {
             }
         }
 
-        Result table = tableArgument("join", "table", new Binding(), args.get(0));
+        ExpressionResult table = tableArgument("join", "table", new Binding(), args.get(0));
         Binding resultBinding = new Binding(binding);
         binding.join(table.binding());
 
-        Result condition = scalarArgument("join", "on", resultBinding, args.get(1));
+        ExpressionResult condition = scalarArgument("join", "on", resultBinding, args.get(1));
 
         if (condition.scalar().getType() != ValueType.BOOLEAN) {
             reportError("'join' requires a boolean condition");
@@ -393,10 +428,10 @@ public class SemanticAnalyzer {
             resultBinding = table.binding();
         }
 
-        return new Result(new JoinOperator(type, base.table(), table.table(), condition.scalar()), resultBinding);
+        return new ExpressionResult(operatorProvider.join(base.table(), table.table(), condition.scalar(), type), resultBinding);
     }
 
-    private Result parseGroupBy(Result base, List<ArgNode> args) {
+    private ExpressionResult parseGroupBy(ExpressionResult base, List<ArgNode> args) {
         List<MapOperator.Entry> groupBy = new ArrayList<>();
         List<GroupByOperator.Aggregation> aggregates = new ArrayList<>();
         List<MapOperator.Entry> results = new ArrayList<>();
@@ -446,16 +481,16 @@ public class SemanticAnalyzer {
             }
         }
 
-        Operator result = new GroupByOperator(base.table(), groupBy, aggregates);
+        TOperator result = operatorProvider.groupBy(base.table(), groupBy, aggregates);
 
         if (!results.isEmpty()) {
-            result = new MapOperator(result, results);
+            result = operatorProvider.map(result, results);
         }
 
-        return new Result(result, resultBinding);
+        return new ExpressionResult(result, resultBinding);
     }
 
-    private Result parseOrderBy(Result base, List<ArgNode> args) {
+    private ExpressionResult parseOrderBy(ExpressionResult base, List<ArgNode> args) {
         List<OrderByOperator.Entry> entries = new ArrayList<>();
 
         if (args.get(0) != null) {
@@ -490,38 +525,10 @@ public class SemanticAnalyzer {
         long limit = args.get(1) != null ? handleConstant.apply("limit", args.get(1)) : Long.MAX_VALUE;
         long offset = args.get(2) != null ? handleConstant.apply("offset", args.get(2)) : 0;
 
-        return new Result(new OrderByOperator(base.table(), entries, limit, offset), base.binding());
+        return new ExpressionResult(operatorProvider.orderBy(base.table(), entries, limit, offset), base.binding());
     }
 
-    private Result parseMap(Result base, List<ArgNode> args, boolean project) {
-        String name = project ? "project" : "map";
-        List<ExpressionArg> list = listArgument(base.binding(), args.get(0));
-        List<MapOperator.Entry> entries = new ArrayList<>();
-        Binding resultBinding = project ? new Binding() : base.binding();
-
-        // Compute the expressions
-        for (ExpressionArg arg : list) {
-            if (!arg.getResult().isScalar()) {
-                reportError(name + " requires scalar values");
-            }
-
-            ValueType type = arg.getResult().scalar().getType();
-            entries.add(new MapOperator.Entry(new IU(type), arg.getResult().scalar()));
-
-            // Make expressions visible
-            String argName = arg.getName();
-
-            if (argName == null) {
-                argName = String.valueOf(resultBinding.getColumnLookup().size() + 1);
-            }
-
-            resultBinding.addBinding(argName, entries.get(entries.size() - 1).getIU());
-        }
-
-        return new Result(new MapOperator(base.table(), entries), resultBinding);
-    }
-
-    private Result parseAs(Result base, List<ArgNode> args) {
+    private ExpressionResult parseAs(ExpressionResult base, List<ArgNode> args) {
         String name = symbolArgument("as", "name", args.get(0));
         base.binding().getScopes().clear();
         base.binding().getScopes()
@@ -532,7 +539,7 @@ public class SemanticAnalyzer {
         return base;
     }
 
-    private Result parseAggregate(Binding binding, GroupByOperator.Operation operation, GroupByOperator.Operation operationDistinct, String name, List<ArgNode> args) {
+    private ExpressionResult parseAggregate(Binding binding, GroupByOperator.Operation operation, GroupByOperator.Operation operationDistinct, String name, List<ArgNode> args) {
         GroupByScope groupByScope = binding.getGroupByScope();
 
         if (groupByScope == null) {
@@ -543,7 +550,7 @@ public class SemanticAnalyzer {
             operation = operationDistinct;
         }
 
-        Result result = new Result(new EmptyExpression());
+        ExpressionResult result = new ExpressionResult(expressionProvider.empty());
         ValueType resultType = ValueType.INTEGER;
 
         if (operation != GroupByOperator.Operation.COUNT_STAR) {
@@ -563,11 +570,11 @@ public class SemanticAnalyzer {
         IU iu = new IU(resultType);
 
         groupByScope.getAggregations().add(new GroupByOperator.Aggregation(iu, result.scalar(), operation));
-        return new Result(new RefExpression(iu));
+        return new ExpressionResult(expressionProvider.ref(iu));
     }
 
-    private Result parseUnaryExpression(Binding binding, UnaryNode ast) {
-        Result value = parseExpression(binding, ast.getValue());
+    private ExpressionResult parseUnaryExpression(Binding binding, UnaryNode ast) {
+        ExpressionResult value = parseExpression(binding, ast.getValue());
 
         if (!value.isScalar()) {
             reportError("expected scalar value");
@@ -581,14 +588,15 @@ public class SemanticAnalyzer {
             reportError("expected boolean value");
         }
 
-        return new Result(new UnaryExpression(ast.getOperation(), value.scalar()));
+        return new ExpressionResult(expressionProvider.unary(value.scalar(), ast.getOperation()));
     }
 
-    private Result parseBinaryExpression(Binding binding, BinaryNode ast) {
+    private ExpressionResult parseBinaryExpression(Binding binding, BinaryNode ast) {
         ValueType[] resultType = { null };
+        BinaryExpression.Operation[] operation = { ast.getOperation() };
 
-        Result left = parseExpression(binding, ast.getLeft());
-        Result right = parseExpression(binding, ast.getRight());
+        ExpressionResult left = parseExpression(binding, ast.getLeft());
+        ExpressionResult right = parseExpression(binding, ast.getRight());
 
         if (!left.isScalar() || !right.isScalar()) {
             reportError("expected scalar values");
@@ -601,6 +609,7 @@ public class SemanticAnalyzer {
                         : ValueType.INTEGER;
             } else if (ast.getOperation() == BinaryExpression.Operation.ADD && left.scalar().getType() == ValueType.TEXT && right.scalar().getType() == ValueType.TEXT) {
                 resultType[0] = ValueType.TEXT;
+                operation[0] = BinaryExpression.Operation.CONCAT;
             } else if ((ast.getOperation() == BinaryExpression.Operation.ADD || ast.getOperation() == BinaryExpression.Operation.SUB) && left.scalar().getType() == ValueType.DATE && right.scalar().getType() == ValueType.INTERVAL) {
                 resultType[0] = ValueType.DATE;
             } else {
@@ -638,11 +647,11 @@ public class SemanticAnalyzer {
             case OR: doLogic.run(); break;
         }
 
-        return new Result(new BinaryExpression(resultType[0], ast.getOperation(), left.scalar(), right.scalar()));
+        return new ExpressionResult(expressionProvider.binary(left.scalar(), right.scalar(), operation[0], resultType[0]));
     }
 
-    private Result parseCast(Binding binding, CastNode ast) {
-        Result value = parseExpression(binding, ast.getValue());
+    private ExpressionResult parseCast(Binding binding, CastNode ast) {
+        ExpressionResult value = parseExpression(binding, ast.getValue());
         String cast = extractValue(ast.getCast());
         ValueType type = null;
 
@@ -664,7 +673,7 @@ public class SemanticAnalyzer {
             default: reportError("unknown type '" + cast + "'");
         }
 
-        return new Result(new CastExpression(value.scalar(), type));
+        return new ExpressionResult(expressionProvider.cast(value.scalar(), type));
     }
 
     private String symbolArgument(String funcName, String argName, ArgNode arg) {
@@ -675,12 +684,12 @@ public class SemanticAnalyzer {
         return extractValue(arg.getValue());
     }
 
-    private Result scalarArgument(String funcName, String argName, Binding binding, ArgNode arg) {
+    private ExpressionResult scalarArgument(String funcName, String argName, Binding binding, ArgNode arg) {
         if (arg.isList()) {
             reportError("parameter '" + argName + "' requires a scalar in call to '" + funcName + "'");
         }
 
-        Result scalar = parseExpression(binding, arg.getValue());
+        ExpressionResult scalar = parseExpression(binding, arg.getValue());
 
         if (!scalar.isScalar()) {
             reportError("parameter '" + argName + "' requires a scalar in call to '" + funcName + "'");
@@ -709,12 +718,12 @@ public class SemanticAnalyzer {
         throw new InvalidAstException();
     }
 
-    private Result tableArgument(String funcName, String argName, Binding binding, ArgNode arg) {
+    private ExpressionResult tableArgument(String funcName, String argName, Binding binding, ArgNode arg) {
         if (arg.isList()) {
             reportError("parameter '" + argName + "' requires a table in call to '" + funcName + "'");
         }
 
-        Result table = parseExpression(binding, arg.getValue());
+        ExpressionResult table = parseExpression(binding, arg.getValue());
 
         if (!table.isTable()) {
             reportError("parameter '" + argName + "' requires a table in call to '" + funcName + "'");
@@ -730,7 +739,7 @@ public class SemanticAnalyzer {
             ListNode list = (ListNode) arg.getValue();
 
             for (ArgNode subArg : typedList(list.getValues())) {
-                Result value = parseExpression(binding, subArg.getValue());
+                ExpressionResult value = parseExpression(binding, subArg.getValue());
                 String name = subArg.getName() != null
                     ? extractValue(subArg.getName())
                     : inferName(subArg.getValue());
@@ -738,7 +747,7 @@ public class SemanticAnalyzer {
                 result.add(new ExpressionArg(name, value));
             }
         } else {
-            Result value = parseExpression(binding, arg.getValue());
+            ExpressionResult value = parseExpression(binding, arg.getValue());
             String name = inferName(arg.getValue());
 
             result.add(new ExpressionArg(name, value));
@@ -747,7 +756,7 @@ public class SemanticAnalyzer {
         return result;
     }
 
-    private void enforceComparable(Result left, Result right) {
+    private void enforceComparable(ExpressionResult left, ExpressionResult right) {
         boolean comparable = false;
 
         switch (left.scalar().getType()) {
@@ -759,7 +768,7 @@ public class SemanticAnalyzer {
             case INTERVAL: comparable = right.scalar().getType() == ValueType.INTERVAL; break;
         }
 
-        comparable |= left.scalar().getType() == ValueType.NULL || right.scalar().getType() == null;
+        comparable |= left.scalar().getType() == ValueType.UNKNOWN || right.scalar().getType() == null;
 
         if (!comparable) {
             reportError("invalid comparison, types are not compatible");

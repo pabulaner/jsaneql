@@ -2,10 +2,9 @@ package de.pabulaner.jsaneql.algebra.operator;
 
 import de.pabulaner.jsaneql.algebra.IU;
 import de.pabulaner.jsaneql.algebra.expression.Expression;
-import de.pabulaner.jsaneql.schema.Value;
+import de.pabulaner.jsaneql.compile.SQLWriter;
 
 import java.util.List;
-import java.util.Map;
 
 public class MapOperator implements Operator {
 
@@ -39,15 +38,18 @@ public class MapOperator implements Operator {
     }
 
     @Override
-    public Map<IU, Value> next() {
-        Map<IU, Value> row = input.next();
+    public void generate(SQLWriter out) {
+        out.write("(SELECT *");
 
-        if (row != null) {
-            for (Entry computation : computations) {
-                row.put(computation.getIU(), computation.getValue().getValue(row));
-            }
+        for (Entry computation : computations) {
+            out.write(", ");
+            computation.getValue().generate(out);
+            out.write (" AS ");
+            out.writeIU(computation.getIU());
         }
 
-        return row;
+        out.write(" FROM ");
+        input.generate(out);
+        out.write(" s)");
     }
 }

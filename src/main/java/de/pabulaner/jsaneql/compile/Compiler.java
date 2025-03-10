@@ -1,11 +1,10 @@
-package de.pabulaner.jsaneql;
+package de.pabulaner.jsaneql.compile;
 
 import de.pabulaner.jsaneql.parser.Parser;
-import de.pabulaner.jsaneql.parser.ast.Node;
 import de.pabulaner.jsaneql.parser.ast.QueryNode;
 import de.pabulaner.jsaneql.schema.Database;
 import de.pabulaner.jsaneql.semana.SemanticAnalyzer;
-import de.pabulaner.jsaneql.semana.result.Result;
+import de.pabulaner.jsaneql.semana.result.ExpressionResult;
 import de.pabulaner.jsaneql.tokenizer.Token;
 import de.pabulaner.jsaneql.tokenizer.Tokenizer;
 
@@ -25,7 +24,7 @@ public class Compiler {
         analyzer = new SemanticAnalyzer(db);
     }
 
-    public Result compile(String query) throws CompileException {
+    public ExpressionResult compile(String query) throws CompileException {
         List<Token> tokens = tokenizer.parse(query);
         QueryNode ast = parser.parse(tokens);
 

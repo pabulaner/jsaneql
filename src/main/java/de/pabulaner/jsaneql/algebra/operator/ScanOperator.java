@@ -1,38 +1,38 @@
 package de.pabulaner.jsaneql.algebra.operator;
 
-import de.pabulaner.jsaneql.algebra.IU;
-import de.pabulaner.jsaneql.schema.Table;
-import de.pabulaner.jsaneql.schema.TableRow;
-import de.pabulaner.jsaneql.schema.Value;
+import de.pabulaner.jsaneql.algebra.Column;
+import de.pabulaner.jsaneql.compile.SQLWriter;
 
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 public class ScanOperator implements Operator {
 
-    private final Iterator<TableRow> rows;
+    private final String name;
 
-    private final List<IU> columns;
+    private final List<Column> columns;
 
-    public ScanOperator(Table table, List<IU> columns) {
-        this.rows = table.getRows();
+    public ScanOperator(String name, List<Column> columns) {
+        this.name = name;
         this.columns = columns;
     }
 
-    public Map<IU, Value> next() {
-        if (!rows.hasNext()) {
-            return null;
+
+    @Override
+    public void generate(SQLWriter out) {
+        out.write("(SELECT ");
+
+        boolean first = true;
+        for (Column column : columns) {
+            if (first) {
+                first = false;
+            } else {
+                out.write(", ");
+            }
+
+            out.write(column.getName() + " AS ");
+            out.writeIU(column.getIU());
         }
 
-        Map<IU, Value> result = new HashMap<>();
-        TableRow row = rows.next();
-
-        for (int i = 0; i < columns.size(); i++) {
-            result.put(columns.get(i), row.getValue(i));
-        }
-
-        return result;
+        out.write(" FROM " + name + ")");
     }
 }

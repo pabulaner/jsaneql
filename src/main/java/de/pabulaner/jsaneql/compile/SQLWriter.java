@@ -1,4 +1,4 @@
-package de.pabulaner.jsaneql.exec;
+package de.pabulaner.jsaneql.compile;
 
 import de.pabulaner.jsaneql.algebra.IU;
 import de.pabulaner.jsaneql.schema.ValueType;
@@ -21,24 +21,25 @@ public class SQLWriter {
         result.append(sql);
     }
 
+    public void writeString(String sql) {
+        result.append('\'').append(sql).append('\'');
+    }
+
     public void writeIU(IU iu) {
         String name = names.computeIfAbsent(iu, key -> "v" + (names.size() + 1));
         write(name);
     }
 
     public void writeType(ValueType type) {
-        switch (type) {
-            case TEXT: write("text"); break;
-            case INTEGER: write("integer"); break;
-            case DECIMAL: write("float"); break;
-            case BOOLEAN: write("boolean"); break;
-            case DATE: write("date"); break;
-            case INTERVAL: write("interval"); break;
-            case NULL: write("unknown"); break;
+        if (type == ValueType.DECIMAL) {
+            write("float");
+        } else {
+            write(type.getName());
         }
     }
 
-    public String getResult() {
+    @Override
+    public String toString() {
         return result.toString();
     }
 }

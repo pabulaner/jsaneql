@@ -1,10 +1,7 @@
 package de.pabulaner.jsaneql.algebra.expression;
 
-import de.pabulaner.jsaneql.algebra.IU;
-import de.pabulaner.jsaneql.schema.Value;
+import de.pabulaner.jsaneql.compile.SQLWriter;
 import de.pabulaner.jsaneql.schema.ValueType;
-
-import java.util.Map;
 
 public class SubstrExpression implements Expression {
 
@@ -21,14 +18,21 @@ public class SubstrExpression implements Expression {
     }
 
     @Override
-    public Value getValue(Map<IU, Value> row) {
-        Value fromValue = from.getValue(row);
-        Value lengthValue = length.getValue(row);
+    public void generate(SQLWriter out) {
+        out.write("SUBSTR(");
+        value.generate(out);
 
-        int begin = (int) fromValue.getInteger() - 1;
-        int end = (int) fromValue.add(lengthValue).getInteger() - 1;
+        if (from != null) {
+            out.write(" FROM ");
+            from.generate(out);
+        }
 
-        return Value.ofString(value.getValue(row).getString().substring(begin, end));
+        if (length != null) {
+            out.writeString(" FOR ");
+            length.generate(out);
+        }
+
+        out.write(")");
     }
 
     @Override

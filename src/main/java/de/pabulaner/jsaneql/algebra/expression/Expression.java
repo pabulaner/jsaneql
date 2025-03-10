@@ -1,14 +1,17 @@
 package de.pabulaner.jsaneql.algebra.expression;
 
-import de.pabulaner.jsaneql.algebra.IU;
-import de.pabulaner.jsaneql.schema.Value;
+import de.pabulaner.jsaneql.compile.SQLWriter;
 import de.pabulaner.jsaneql.schema.ValueType;
-
-import java.util.Map;
 
 public interface Expression {
 
-    Value getValue(Map<IU, Value> row);
+    void generate(SQLWriter out);
+
+    default void generateOperand(SQLWriter out) {
+        out.write("(");
+        generate(out);
+        out.write(")");
+    }
 
     ValueType getType();
 }

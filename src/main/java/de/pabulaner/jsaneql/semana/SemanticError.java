@@ -1,6 +1,5 @@
 package de.pabulaner.jsaneql.semana;
 
-import de.pabulaner.jsaneql.tokenizer.Token;
 import de.pabulaner.jsaneql.util.StringView;
 
 public class SemanticError {

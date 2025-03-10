@@ -1,10 +1,7 @@
 package de.pabulaner.jsaneql.algebra.expression;
 
-import de.pabulaner.jsaneql.algebra.IU;
-import de.pabulaner.jsaneql.schema.Value;
+import de.pabulaner.jsaneql.compile.SQLWriter;
 import de.pabulaner.jsaneql.schema.ValueType;
-
-import java.util.Map;
 
 public class UnaryExpression implements Expression {
 
@@ -25,16 +22,14 @@ public class UnaryExpression implements Expression {
     }
 
     @Override
-    public Value getValue(Map<IU, Value> row) {
-        Value value = expression.getValue(row);
-
+    public void generate(SQLWriter out) {
         switch (operation) {
-            case ADD: return value;
-            case SUB: return Value.ofInteger(0L).sub(value);
-            case NOT: return Value.ofBoolean(!value.getBoolean());
+            case ADD: out.write("+"); break;
+            case SUB: out.write("-"); break;
+            case NOT: out.write("!"); break;
         }
 
-        return null;
+        expression.generateOperand(out);
     }
 
     @Override

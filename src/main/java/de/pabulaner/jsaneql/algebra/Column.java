@@ -1,6 +1,4 @@
-package de.pabulaner.jsaneql.semana.binding;
-
-import de.pabulaner.jsaneql.algebra.IU;
+package de.pabulaner.jsaneql.algebra;
 
 public class Column {
 
