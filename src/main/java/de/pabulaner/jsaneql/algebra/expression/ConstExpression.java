@@ -3,13 +3,13 @@ package de.pabulaner.jsaneql.algebra.expression;
 import de.pabulaner.jsaneql.compile.SQLWriter;
 import de.pabulaner.jsaneql.schema.ValueType;
 
-public class ValueExpression implements Expression {
+public class ConstExpression implements Expression {
 
     private final ValueType type;
 
     private final String value;
 
-    public ValueExpression(ValueType type, String value) {
+    public ConstExpression(ValueType type, String value) {
         this.type = type;
         this.value = value;
     }

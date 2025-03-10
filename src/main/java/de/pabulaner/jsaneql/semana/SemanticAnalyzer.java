@@ -2,28 +2,23 @@ package de.pabulaner.jsaneql.semana;
 
 import de.pabulaner.jsaneql.algebra.Column;
 import de.pabulaner.jsaneql.algebra.IU;
-import de.pabulaner.jsaneql.algebra.expression.ExpressionProvider;
-import de.pabulaner.jsaneql.algebra.operator.OperatorProvider;
 import de.pabulaner.jsaneql.algebra.expression.BetweenExpression;
 import de.pabulaner.jsaneql.algebra.expression.BinaryExpression;
 import de.pabulaner.jsaneql.algebra.expression.CastExpression;
-import de.pabulaner.jsaneql.algebra.expression.ValueExpression;
 import de.pabulaner.jsaneql.algebra.expression.EmptyExpression;
 import de.pabulaner.jsaneql.algebra.expression.Expression;
 import de.pabulaner.jsaneql.algebra.expression.ExtractExpression;
 import de.pabulaner.jsaneql.algebra.expression.InExpression;
-import de.pabulaner.jsaneql.algebra.expression.RefExpression;
 import de.pabulaner.jsaneql.algebra.expression.SubstrExpression;
-import de.pabulaner.jsaneql.algebra.expression.UnaryExpression;
 import de.pabulaner.jsaneql.algebra.operator.GroupByOperator;
 import de.pabulaner.jsaneql.algebra.operator.JoinOperator;
 import de.pabulaner.jsaneql.algebra.operator.MapOperator;
 import de.pabulaner.jsaneql.algebra.operator.Operator;
 import de.pabulaner.jsaneql.algebra.operator.OrderByOperator;
 import de.pabulaner.jsaneql.parser.ast.AccessNode;
-import de.pabulaner.jsaneql.parser.ast.ArgNode;
 import de.pabulaner.jsaneql.parser.ast.BinaryNode;
 import de.pabulaner.jsaneql.parser.ast.CallNode;
+import de.pabulaner.jsaneql.parser.ast.ArgNode;
 import de.pabulaner.jsaneql.parser.ast.CastNode;
 import de.pabulaner.jsaneql.parser.ast.ListNode;
 import de.pabulaner.jsaneql.parser.ast.Node;
@@ -34,15 +29,20 @@ import de.pabulaner.jsaneql.schema.Database;
 import de.pabulaner.jsaneql.schema.Table;
 import de.pabulaner.jsaneql.schema.TableColumn;
 import de.pabulaner.jsaneql.schema.ValueType;
-import de.pabulaner.jsaneql.semana.binding.Binding;
+import de.pabulaner.jsaneql.algebra.expression.ConstExpression;
+import de.pabulaner.jsaneql.algebra.expression.RefExpression;
+import de.pabulaner.jsaneql.algebra.expression.UnaryExpression;
 import de.pabulaner.jsaneql.semana.binding.GroupByScope;
 import de.pabulaner.jsaneql.semana.binding.Scope;
 import de.pabulaner.jsaneql.semana.function.ExpressionArg;
 import de.pabulaner.jsaneql.semana.function.Function;
 import de.pabulaner.jsaneql.semana.function.FunctionArg;
 import de.pabulaner.jsaneql.semana.function.Functions;
-import de.pabulaner.jsaneql.semana.result.ExpressionResult;
+import de.pabulaner.jsaneql.algebra.operator.FilterOperator;
+import de.pabulaner.jsaneql.algebra.operator.ScanOperator;
 import de.pabulaner.jsaneql.semana.result.OrderingInfo;
+import de.pabulaner.jsaneql.semana.result.ExpressionResult;
+import de.pabulaner.jsaneql.semana.binding.Binding;
 import de.pabulaner.jsaneql.tokenizer.Token;
 
 import java.util.ArrayList;
@@ -50,19 +50,13 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
-public class SemanticAnalyzer<TOperator extends Operator, TExpression extends Expression> {
-
-    private final OperatorProvider<TOperator, TExpression> operatorProvider;
-
-    private final ExpressionProvider<TExpression> expressionProvider;
+public class SemanticAnalyzer {
 
     private final Database db;
 
     private final Functions functions;
 
-    public SemanticAnalyzer(OperatorProvider<TOperator, TExpression> operatorProvider, ExpressionProvider<TExpression> expressionProvider, Database db) {
-        this.operatorProvider = operatorProvider;
-        this.expressionProvider = expressionProvider;
+    public SemanticAnalyzer(Database db) {
         this.db = db;
         this.functions = new Functions();
     }
@@ -96,7 +90,7 @@ public class SemanticAnalyzer<TOperator extends Operator, TExpression extends Ex
                     reportError("'" + name + "' is ambiguous");
                 }
 
-                return new ExpressionResult(expressionProvider.ref(iu));
+                return new ExpressionResult(new RefExpression(iu));
             }
 
             // Is it a scan?
@@ -116,7 +110,7 @@ public class SemanticAnalyzer<TOperator extends Operator, TExpression extends Ex
                 columns.add(new Column(column.getName(), iu));
             }
 
-            return new ExpressionResult(operatorProvider.scan(name, columns), binding);
+            return new ExpressionResult(new ScanOperator(name, columns), binding);
         } else {
             ValueType type;
 
@@ -129,7 +123,7 @@ public class SemanticAnalyzer<TOperator extends Operator, TExpression extends Ex
                 default: throw new InvalidAstException();
             }
 
-            return new ExpressionResult(expressionProvider.value(token.getValue().toString(), type));
+            return new ExpressionResult(new ConstExpression(type, token.getValue().toString()));
         }
     }
 
@@ -151,7 +145,7 @@ public class SemanticAnalyzer<TOperator extends Operator, TExpression extends Ex
             reportError("'" + base + "' is ambiguous");
         }
 
-        return new ExpressionResult(expressionProvider.ref(iu));
+        return new ExpressionResult(new RefExpression(iu));
     }
 
     private ExpressionResult parseCall(Binding binding, CallNode ast) {
@@ -250,11 +244,11 @@ public class SemanticAnalyzer<TOperator extends Operator, TExpression extends Ex
             case SUBSTR: return parseSubstr(binding, base, args);
             case EXTRACT: return parseExtract(binding, base, args);
             case FILTER: return parseFilter(base, args);
-            case MAP: return parseMap(base, args, false);
-            case PROJECT: return parseMap(base, args, true);
             case JOIN: return parseJoin(binding, base, args);
             case GROUP_BY: return parseGroupBy(base, args);
             case ORDER_BY: return parseOrderBy(base, args);
+            case MAP: return parseMap(base, args, false);
+            case PROJECT: return parseMap(base, args, true);
             case AS: return parseAs(base, args);
             case COUNT: return parseAggregate(binding, args.get(0) != null ? GroupByOperator.Operation.COUNT : GroupByOperator.Operation.COUNT_STAR, args.get(0) != null ? GroupByOperator.Operation.COUNT_DISTINCT : GroupByOperator.Operation.COUNT_STAR, name, args);
             case SUM: return parseAggregate(binding, GroupByOperator.Operation.SUM, GroupByOperator.Operation.SUM_DISTINCT, name, args);
@@ -279,19 +273,19 @@ public class SemanticAnalyzer<TOperator extends Operator, TExpression extends Ex
         enforceComparable(base, lower);
         enforceComparable(base, upper);
 
-        return new ExpressionResult(expressionProvider.between(base.scalar(), lower.scalar(), upper.scalar()));
+        return new ExpressionResult(new BetweenExpression(base.scalar(), lower.scalar(), upper.scalar()));
     }
 
     private ExpressionResult parseIn(Binding binding, ExpressionResult base, List<ArgNode> args) {
         List<ExpressionArg> values = listArgument(binding, args.get(0));
-        List<TExpression> expressions = new ArrayList<>();
+        List<Expression> expressions = new ArrayList<>();
 
         for (ExpressionArg value : values) {
             enforceComparable(base, value.getResult());
             expressions.add(value.getResult().scalar());
         }
 
-        return new ExpressionResult(expressionProvider.in(base.scalar(), expressions));
+        return new ExpressionResult(new InExpression(base.scalar(), expressions));
     }
 
     private ExpressionResult parseLike(Binding binding, ExpressionResult base, List<ArgNode> args) {
@@ -301,13 +295,13 @@ public class SemanticAnalyzer<TOperator extends Operator, TExpression extends Ex
             reportError("'like' requires string argument");
         }
 
-        return new ExpressionResult(expressionProvider.binary(base.scalar(), pattern.scalar(), BinaryExpression.Operation.LIKE, ValueType.BOOLEAN));
+        return new ExpressionResult(new BinaryExpression(ValueType.BOOLEAN, BinaryExpression.Operation.LIKE, base.scalar(), pattern.scalar()));
     }
 
     private ExpressionResult parseSubstr(Binding binding, ExpressionResult base, List<ArgNode> args) {
         String message = "'substr' requires numeric arguments";
-        TExpression from = null;
-        TExpression length = null;
+        Expression from = null;
+        Expression length = null;
 
         if (args.get(0) == null && args.get(1) == null) {
             reportError(message);
@@ -329,7 +323,7 @@ public class SemanticAnalyzer<TOperator extends Operator, TExpression extends Ex
             }
         }
 
-        return new ExpressionResult(expressionProvider.substr(base.scalar(), from, length));
+        return new ExpressionResult(new SubstrExpression(base.scalar(), from, length));
     }
 
     private ExpressionResult parseExtract(Binding binding, ExpressionResult base, List<ArgNode> args) {
@@ -343,7 +337,7 @@ public class SemanticAnalyzer<TOperator extends Operator, TExpression extends Ex
             default: reportError("unknown date part '" + name + "'");
         }
 
-        return new ExpressionResult(expressionProvider.extract(base.scalar(), part));
+        return new ExpressionResult(new ExtractExpression(base.scalar(), part));
     }
 
     private ExpressionResult parseFilter(ExpressionResult base, List<ArgNode> args) {
@@ -353,35 +347,7 @@ public class SemanticAnalyzer<TOperator extends Operator, TExpression extends Ex
             reportError("'filter' requires a boolean condition");
         }
 
-        return new ExpressionResult(operatorProvider.filter(base.table(), condition.scalar()), base.binding());
-    }
-
-    private ExpressionResult parseMap(ExpressionResult base, List<ArgNode> args, boolean project) {
-        String name = project ? "project" : "map";
-        List<ExpressionArg> list = listArgument(base.binding(), args.get(0));
-        List<MapOperator.Entry> entries = new ArrayList<>();
-        Binding resultBinding = project ? new Binding() : base.binding();
-
-        // Compute the expressions
-        for (ExpressionArg arg : list) {
-            if (!arg.getResult().isScalar()) {
-                reportError(name + " requires scalar values");
-            }
-
-            ValueType type = arg.getResult().scalar().getType();
-            entries.add(new MapOperator.Entry(new IU(type), arg.getResult().scalar()));
-
-            // Make expressions visible
-            String argName = arg.getName();
-
-            if (argName == null) {
-                argName = String.valueOf(resultBinding.getColumnLookup().size() + 1);
-            }
-
-            resultBinding.addBinding(argName, entries.get(entries.size() - 1).getIU());
-        }
-
-        return new ExpressionResult(operatorProvider.map(base.table(), entries), resultBinding);
+        return new ExpressionResult(new FilterOperator(base.table(), condition.scalar()), base.binding());
     }
 
     private ExpressionResult parseJoin(Binding binding, ExpressionResult base, List<ArgNode> args) {
@@ -428,7 +394,7 @@ public class SemanticAnalyzer<TOperator extends Operator, TExpression extends Ex
             resultBinding = table.binding();
         }
 
-        return new ExpressionResult(operatorProvider.join(base.table(), table.table(), condition.scalar(), type), resultBinding);
+        return new ExpressionResult(new JoinOperator(type, base.table(), table.table(), condition.scalar()), resultBinding);
     }
 
     private ExpressionResult parseGroupBy(ExpressionResult base, List<ArgNode> args) {
@@ -481,10 +447,10 @@ public class SemanticAnalyzer<TOperator extends Operator, TExpression extends Ex
             }
         }
 
-        TOperator result = operatorProvider.groupBy(base.table(), groupBy, aggregates);
+        Operator result = new GroupByOperator(base.table(), groupBy, aggregates);
 
         if (!results.isEmpty()) {
-            result = operatorProvider.map(result, results);
+            result = new MapOperator(result, results);
         }
 
         return new ExpressionResult(result, resultBinding);
@@ -525,7 +491,35 @@ public class SemanticAnalyzer<TOperator extends Operator, TExpression extends Ex
         long limit = args.get(1) != null ? handleConstant.apply("limit", args.get(1)) : Long.MAX_VALUE;
         long offset = args.get(2) != null ? handleConstant.apply("offset", args.get(2)) : 0;
 
-        return new ExpressionResult(operatorProvider.orderBy(base.table(), entries, limit, offset), base.binding());
+        return new ExpressionResult(new OrderByOperator(base.table(), entries, limit, offset), base.binding());
+    }
+
+    private ExpressionResult parseMap(ExpressionResult base, List<ArgNode> args, boolean project) {
+        String name = project ? "project" : "map";
+        List<ExpressionArg> list = listArgument(base.binding(), args.get(0));
+        List<MapOperator.Entry> entries = new ArrayList<>();
+        Binding resultBinding = project ? new Binding() : base.binding();
+
+        // Compute the expressions
+        for (ExpressionArg arg : list) {
+            if (!arg.getResult().isScalar()) {
+                reportError(name + " requires scalar values");
+            }
+
+            ValueType type = arg.getResult().scalar().getType();
+            entries.add(new MapOperator.Entry(new IU(type), arg.getResult().scalar()));
+
+            // Make expressions visible
+            String argName = arg.getName();
+
+            if (argName == null) {
+                argName = String.valueOf(resultBinding.getColumnLookup().size() + 1);
+            }
+
+            resultBinding.addBinding(argName, entries.get(entries.size() - 1).getIU());
+        }
+
+        return new ExpressionResult(new MapOperator(base.table(), entries), resultBinding);
     }
 
     private ExpressionResult parseAs(ExpressionResult base, List<ArgNode> args) {
@@ -550,7 +544,7 @@ public class SemanticAnalyzer<TOperator extends Operator, TExpression extends Ex
             operation = operationDistinct;
         }
 
-        ExpressionResult result = new ExpressionResult(expressionProvider.empty());
+        ExpressionResult result = new ExpressionResult(new EmptyExpression());
         ValueType resultType = ValueType.INTEGER;
 
         if (operation != GroupByOperator.Operation.COUNT_STAR) {
@@ -570,7 +564,7 @@ public class SemanticAnalyzer<TOperator extends Operator, TExpression extends Ex
         IU iu = new IU(resultType);
 
         groupByScope.getAggregations().add(new GroupByOperator.Aggregation(iu, result.scalar(), operation));
-        return new ExpressionResult(expressionProvider.ref(iu));
+        return new ExpressionResult(new RefExpression(iu));
     }
 
     private ExpressionResult parseUnaryExpression(Binding binding, UnaryNode ast) {
@@ -588,12 +582,11 @@ public class SemanticAnalyzer<TOperator extends Operator, TExpression extends Ex
             reportError("expected boolean value");
         }
 
-        return new ExpressionResult(expressionProvider.unary(value.scalar(), ast.getOperation()));
+        return new ExpressionResult(new UnaryExpression(ast.getOperation(), value.scalar()));
     }
 
     private ExpressionResult parseBinaryExpression(Binding binding, BinaryNode ast) {
         ValueType[] resultType = { null };
-        BinaryExpression.Operation[] operation = { ast.getOperation() };
 
         ExpressionResult left = parseExpression(binding, ast.getLeft());
         ExpressionResult right = parseExpression(binding, ast.getRight());
@@ -609,7 +602,6 @@ public class SemanticAnalyzer<TOperator extends Operator, TExpression extends Ex
                         : ValueType.INTEGER;
             } else if (ast.getOperation() == BinaryExpression.Operation.ADD && left.scalar().getType() == ValueType.TEXT && right.scalar().getType() == ValueType.TEXT) {
                 resultType[0] = ValueType.TEXT;
-                operation[0] = BinaryExpression.Operation.CONCAT;
             } else if ((ast.getOperation() == BinaryExpression.Operation.ADD || ast.getOperation() == BinaryExpression.Operation.SUB) && left.scalar().getType() == ValueType.DATE && right.scalar().getType() == ValueType.INTERVAL) {
                 resultType[0] = ValueType.DATE;
             } else {
@@ -647,7 +639,7 @@ public class SemanticAnalyzer<TOperator extends Operator, TExpression extends Ex
             case OR: doLogic.run(); break;
         }
 
-        return new ExpressionResult(expressionProvider.binary(left.scalar(), right.scalar(), operation[0], resultType[0]));
+        return new ExpressionResult(new BinaryExpression(resultType[0], ast.getOperation(), left.scalar(), right.scalar()));
     }
 
     private ExpressionResult parseCast(Binding binding, CastNode ast) {
@@ -673,7 +665,7 @@ public class SemanticAnalyzer<TOperator extends Operator, TExpression extends Ex
             default: reportError("unknown type '" + cast + "'");
         }
 
-        return new ExpressionResult(expressionProvider.cast(value.scalar(), type));
+        return new ExpressionResult(new CastExpression(value.scalar(), type));
     }
 
     private String symbolArgument(String funcName, String argName, ArgNode arg) {
