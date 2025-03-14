@@ -1,6 +1,6 @@
 package de.pabulaner.jsaneql.semana.binding;
 
-import de.pabulaner.jsaneql.algebra.Column;
+import de.pabulaner.jsaneql.algebra.IUColumn;
 import de.pabulaner.jsaneql.algebra.IU;
 
 import java.util.ArrayList;
@@ -14,7 +14,7 @@ public class Binding {
 
     public static final IU AMBIGUOUS_SCOPE = new IU(null);
 
-    private final List<Column> columns;
+    private final List<IUColumn> columns;
 
     private final Map<String, IU> columnLookup;
 
@@ -35,7 +35,7 @@ public class Binding {
         scopes = new HashMap<>();
         groupByScope = binding.groupByScope;
 
-        binding.columns.forEach(column -> columns.add(new Column(column.getName(), column.getIU())));
+        binding.columns.forEach(column -> columns.add(new IUColumn(column.getName(), column.getIU())));
         binding.scopes.forEach((key, value) -> scopes.put(key, new Scope(value)));
     }
 
@@ -68,7 +68,7 @@ public class Binding {
         IU other = columnLookup.get(column);
 
         columnLookup.put(column, other != null ? AMBIGUOUS_IU : iu);
-        columns.add(new Column(column, iu));
+        columns.add(new IUColumn(column, iu));
     }
 
     public IU lookup(String name) {
@@ -112,7 +112,7 @@ public class Binding {
         }
     }
 
-    public List<Column> getColumns() {
+    public List<IUColumn> getColumns() {
         return columns;
     }
 

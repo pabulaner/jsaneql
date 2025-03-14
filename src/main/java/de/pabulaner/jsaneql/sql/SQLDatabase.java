@@ -1,12 +1,12 @@
 package de.pabulaner.jsaneql.sql;
 
-import de.pabulaner.jsaneql.algebra.Column;
+import de.pabulaner.jsaneql.algebra.IUColumn;
 import de.pabulaner.jsaneql.compile.CompileException;
 import de.pabulaner.jsaneql.compile.Compiler;
 import de.pabulaner.jsaneql.compile.SQLWriter;
 import de.pabulaner.jsaneql.schema.Database;
 import de.pabulaner.jsaneql.schema.Table;
-import de.pabulaner.jsaneql.schema.TableColumn;
+import de.pabulaner.jsaneql.schema.Column;
 import de.pabulaner.jsaneql.schema.Value;
 import de.pabulaner.jsaneql.semana.result.ExpressionResult;
 
@@ -54,7 +54,7 @@ public class SQLDatabase implements Database {
                 
                 for (int i = 0; i < row.length; i++) {
                     int columnIndex = i + 1;
-                    Column column = result.binding().getColumns().get(i);
+                    IUColumn column = result.binding().getColumns().get(i);
 
                     switch (column.getIU().getType()) {
                         case TEXT: row[i] = Value.ofString(set.getString(columnIndex)); break;
@@ -72,17 +72,17 @@ public class SQLDatabase implements Database {
 
             return new SQLResult(result.binding().getColumns()
                     .stream()
-                    .map(column -> new TableColumn(column.getName(), column.getIU().getType()))
+                    .map(column -> new Column(column.getName(), column.getIU().getType()))
                     .collect(Collectors.toList()), rows);
         }
     }
 
-    public SQLTable addTable(String name, TableColumn... columns) throws SQLException {
+    public SQLTable addTable(String name, Column... columns) throws SQLException {
         try (Statement stmt = connection.createStatement()) {
             StringBuilder command = new StringBuilder("CREATE TABLE " + name + " (");
             boolean first = true;
 
-            for (TableColumn column : columns) {
+            for (Column column : columns) {
                 if (first) {
                     first = false;
                 } else {

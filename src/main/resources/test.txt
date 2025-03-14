@@ -1,8 +1,0 @@
-customer: id, name, age
-house: id, owner_id, address, costs
-car: id, owner_id, model, color
-
-customer // customer[id, name, age]
-.map(hello:='hello' + name) // hello, customer[id, name, age]
-.join(house, owner_id=customer.id) // hello, customer[id, name, age], house[id, owner_id, address, costs]
-.groupby({age}, {sum(costs)}) // age, sum(costs)

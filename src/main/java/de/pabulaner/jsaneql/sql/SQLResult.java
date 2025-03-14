@@ -1,6 +1,6 @@
 package de.pabulaner.jsaneql.sql;
 
-import de.pabulaner.jsaneql.schema.TableColumn;
+import de.pabulaner.jsaneql.schema.Column;
 import de.pabulaner.jsaneql.schema.Value;
 
 import java.util.Iterator;
@@ -9,11 +9,11 @@ import java.util.Queue;
 
 public class SQLResult implements Iterator<Value[]> {
 
-    private final List<TableColumn> columns;
+    private final List<Column> columns;
 
     private final Queue<Value[]> rows;
 
-    public SQLResult(List<TableColumn> columns, Queue<Value[]> rows) {
+    public SQLResult(List<Column> columns, Queue<Value[]> rows) {
         this.columns = columns;
         this.rows = rows;
     }
@@ -28,7 +28,7 @@ public class SQLResult implements Iterator<Value[]> {
         return rows.poll();
     }
 
-    public List<TableColumn> getColumns() {
+    public List<Column> getColumns() {
         return columns;
     }
 }

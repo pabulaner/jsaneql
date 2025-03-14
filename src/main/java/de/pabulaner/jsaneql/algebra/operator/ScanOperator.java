@@ -1,6 +1,6 @@
 package de.pabulaner.jsaneql.algebra.operator;
 
-import de.pabulaner.jsaneql.algebra.Column;
+import de.pabulaner.jsaneql.algebra.IUColumn;
 import de.pabulaner.jsaneql.compile.SQLWriter;
 
 import java.util.List;
@@ -9,9 +9,9 @@ public class ScanOperator implements Operator {
 
     private final String name;
 
-    private final List<Column> columns;
+    private final List<IUColumn> columns;
 
-    public ScanOperator(String name, List<Column> columns) {
+    public ScanOperator(String name, List<IUColumn> columns) {
         this.name = name;
         this.columns = columns;
     }
@@ -22,7 +22,7 @@ public class ScanOperator implements Operator {
         out.write("(SELECT ");
 
         boolean first = true;
-        for (Column column : columns) {
+        for (IUColumn column : columns) {
             if (first) {
                 first = false;
             } else {

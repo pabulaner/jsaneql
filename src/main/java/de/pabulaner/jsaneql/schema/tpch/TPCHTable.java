@@ -1,21 +1,21 @@
 package de.pabulaner.jsaneql.schema.tpch;
 
 import de.pabulaner.jsaneql.schema.Table;
-import de.pabulaner.jsaneql.schema.TableColumn;
+import de.pabulaner.jsaneql.schema.Column;
 
 import java.util.Arrays;
 import java.util.List;
 
 public class TPCHTable implements Table {
 
-    private final List<TableColumn> columns;
+    private final List<Column> columns;
 
-    public TPCHTable(TableColumn... columns) {
+    public TPCHTable(Column... columns) {
         this.columns = Arrays.asList(columns);
     }
 
     @Override
-    public List<TableColumn> getColumns() {
+    public List<Column> getColumns() {
         return columns;
     }
 }

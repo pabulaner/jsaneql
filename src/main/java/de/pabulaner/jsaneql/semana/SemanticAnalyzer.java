@@ -1,6 +1,6 @@
 package de.pabulaner.jsaneql.semana;
 
-import de.pabulaner.jsaneql.algebra.Column;
+import de.pabulaner.jsaneql.algebra.IUColumn;
 import de.pabulaner.jsaneql.algebra.IU;
 import de.pabulaner.jsaneql.algebra.expression.BetweenExpression;
 import de.pabulaner.jsaneql.algebra.expression.BinaryExpression;
@@ -27,7 +27,7 @@ import de.pabulaner.jsaneql.parser.ast.TokenNode;
 import de.pabulaner.jsaneql.parser.ast.UnaryNode;
 import de.pabulaner.jsaneql.schema.Database;
 import de.pabulaner.jsaneql.schema.Table;
-import de.pabulaner.jsaneql.schema.TableColumn;
+import de.pabulaner.jsaneql.schema.Column;
 import de.pabulaner.jsaneql.schema.ValueType;
 import de.pabulaner.jsaneql.algebra.expression.ConstExpression;
 import de.pabulaner.jsaneql.algebra.expression.RefExpression;
@@ -101,13 +101,13 @@ public class SemanticAnalyzer {
             }
 
             Scope scope = binding.addScope(name);
-            List<Column> columns = new ArrayList<>();
+            List<IUColumn> columns = new ArrayList<>();
 
-            for (TableColumn column : table.getColumns()) {
+            for (Column column : table.getColumns()) {
                 iu = new IU(column.getType());
 
                 binding.addBinding(scope, column.getName(), iu);
-                columns.add(new Column(column.getName(), iu));
+                columns.add(new IUColumn(column.getName(), iu));
             }
 
             return new ExpressionResult(new ScanOperator(name, columns), binding);
@@ -407,7 +407,7 @@ public class SemanticAnalyzer {
         // Compute the groupbys
         for (ExpressionArg arg : list) {
             if (!arg.getResult().isScalar()) {
-                reportError("groupby requires scalar groups");
+                reportError("'groupby' requires scalar groups");
             }
 
             ValueType type = arg.getResult().scalar().getType();
@@ -430,7 +430,7 @@ public class SemanticAnalyzer {
 
             for (ExpressionArg arg : list) {
                 if (!arg.getResult().isScalar()) {
-                    reportError("groupby requires scalar aggregates");
+                    reportError("'groupby' requires scalar aggregates");
                 }
 
                 ValueType type = arg.getResult().scalar().getType();
@@ -464,7 +464,7 @@ public class SemanticAnalyzer {
 
             for (ExpressionArg arg : list) {
                 if (!arg.getResult().isScalar()) {
-                    reportError("orderby requires scalar values");
+                    reportError("'orderby' requires scalar values");
                 }
 
                 OrderingInfo ordering = arg.getResult().ordering();
@@ -503,7 +503,7 @@ public class SemanticAnalyzer {
         // Compute the expressions
         for (ExpressionArg arg : list) {
             if (!arg.getResult().isScalar()) {
-                reportError(name + " requires scalar values");
+                reportError("'" + name + "' requires scalar values");
             }
 
             ValueType type = arg.getResult().scalar().getType();

@@ -4,18 +4,15 @@ import de.pabulaner.jsaneql.tokenizer.Token;
 
 public class ParserError {
 
-    private final Token token;
-
     private final String message;
 
-    private ParserError(Token token, String message) {
-        this.token = token;
+    private ParserError(String message) {
         this.message = message;
     }
 
     public static ParserError create(Token token) {
         String message = "Unexpected token: " + token.getValue();
-        return new ParserError(token,  message);
+        return new ParserError(message);
     }
 
     public String getMessage() {

@@ -1,7 +1,7 @@
 package de.pabulaner.jsaneql.sql;
 
 import de.pabulaner.jsaneql.schema.Table;
-import de.pabulaner.jsaneql.schema.TableColumn;
+import de.pabulaner.jsaneql.schema.Column;
 import de.pabulaner.jsaneql.schema.Value;
 
 import java.sql.Connection;
@@ -15,9 +15,9 @@ public class SQLTable implements Table {
 
     private final String name;
 
-    private final List<TableColumn> columns;
+    private final List<Column> columns;
 
-    public SQLTable(Connection connection, String name, List<TableColumn> columns) {
+    public SQLTable(Connection connection, String name, List<Column> columns) {
         this.connection = connection;
         this.name = name;
         this.columns = columns;
@@ -56,7 +56,7 @@ public class SQLTable implements Table {
     }
 
     @Override
-    public List<TableColumn> getColumns() {
+    public List<Column> getColumns() {
         return columns;
     }
 }
